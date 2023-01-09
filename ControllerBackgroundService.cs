@@ -92,7 +92,7 @@ public sealed class Worker : BackgroundService
         }
     }
 
-    private async Task OpenConnection()
+    private Task OpenConnection()
     {
         try
         {
@@ -119,6 +119,8 @@ public sealed class Worker : BackgroundService
         {
             _logger.LogError("ERROR: {message}", ex.Message);
         }
+
+        return Task.CompletedTask;
     }
 
     private async Task SendTelemetry()
