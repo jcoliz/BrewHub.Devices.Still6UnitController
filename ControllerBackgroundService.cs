@@ -28,13 +28,12 @@ public sealed class Worker : BackgroundService
         {
             await SendTelemetry();
             await Task.Delay(30_000, stoppingToken);
-
         }
 
         if (iotClient is not null)
             await iotClient.CloseAsync();
 
-        _logger.LogInformation("Finished.");
+        _logger.LogInformation("Finished");
     }
 
     private async Task ProvisionDevice()
@@ -53,7 +52,7 @@ public sealed class Worker : BackgroundService
             Console.WriteLine(json);
 #endif
 
-            _logger.LogInformation($"Initializing the device provisioning client...");
+            _logger.LogInformation($"Initializing the device provisioning client");
 
             // For group enrollments, the second parameter must be the derived device key.
             // See the ComputeDerivedSymmetricKeySample for how to generate the derived key.
@@ -72,23 +71,23 @@ public sealed class Worker : BackgroundService
                 security,
                 transportHandler);
 
-            _logger.LogInformation($"Initialized for registration Id {security.GetRegistrationID()}.");
+            _logger.LogInformation("Initialized for registration Id {id}", security.GetRegistrationID());
 
-            _logger.LogInformation("Registering with the device provisioning service...");
+            _logger.LogInformation("Registering with the device provisioning service");
             result = await provClient.RegisterAsync();
 
-            _logger.LogInformation($"Registration status: {result.Status}.");
+            _logger.LogInformation("Registration status {status}", result.Status);
             if (result.Status != ProvisioningRegistrationStatusType.Assigned)
             {
-                _logger.LogError($"Registration status did not assign a hub, so exiting this sample.");
+                _logger.LogCritical($"Registration status did not assign a hub");
                 return;
             }
 
-            _logger.LogInformation($"Device {result.DeviceId} registered to {result.AssignedHub}.");
+            _logger.LogInformation("Device {id} registered to {hub}", result.DeviceId, result.AssignedHub);
         }
         catch (Exception ex)
         {
-            _logger.LogError("ERROR: {message}", ex.Message);
+            _logger.LogError("ERROR {message}", ex.Message);
         }
     }
 
@@ -99,12 +98,12 @@ public sealed class Worker : BackgroundService
             // NOTE we can now store the device registration result to storage, and use it next time
             // to not have to run the above registration flow again
 
-            _logger.LogInformation("Creating symmetric key authentication for IoT Hub...");
+            _logger.LogInformation("Creating symmetric key authentication for IoT Hub");
             IAuthenticationMethod auth = new DeviceAuthenticationWithRegistrySymmetricKey(
                 result!.DeviceId,
                 security!.GetPrimaryKey());
 
-            _logger.LogInformation($"Testing the provisioned device with IoT Hub...");
+            _logger.LogInformation("Connecting to IoT Hub");
             iotClient = DeviceClient.Create(result.AssignedHub, auth, TransportType.Mqtt);
 
     #if false        
@@ -117,7 +116,7 @@ public sealed class Worker : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError("ERROR: {message}", ex.Message);
+            _logger.LogError("ERROR {message}", ex.Message);
         }
 
         return Task.CompletedTask;
@@ -128,6 +127,6 @@ public sealed class Worker : BackgroundService
         var text = "TestMessage";
         using var message = new Message(Encoding.UTF8.GetBytes(text));
         await iotClient!.SendEventAsync(message);
-        _logger.LogInformation("Sent message: {text}", text);
+        _logger.LogInformation("Sent message {text}", text);
     }
 }
