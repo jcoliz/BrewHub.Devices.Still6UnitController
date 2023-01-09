@@ -4,10 +4,13 @@ using Tomlyn;
 // See https://aka.ms/new-console-template for more information
 Console.WriteLine("BrewHub Controller");
 
-var model = new ConfigModel();
-model.Provisioning = new Provisioning() { Source = "Source", GlobalEndpoint = "GlobalEndpoint", IdScope = "IdScope" };
-model.Provisioning.Attestation = new() { Method = "Method", RegistrationId = "RegistrationId" };
-model.Provisioning.Attestation.SymmetricKey = new() { Value = "1234" };
+using var reader = File.OpenText("config.toml");
+var toml = reader.ReadToEnd();
 
-var tomlOut = Toml.FromModel(model);
-Console.WriteLine(tomlOut);
+var config = Toml.ToModel<ConfigModel>(toml);
+
+var options = new System.Text.Json.JsonSerializerOptions() { WriteIndented = true };
+var json = System.Text.Json.JsonSerializer.Serialize(config,options);
+
+Console.WriteLine("Config:");
+Console.WriteLine(json);
