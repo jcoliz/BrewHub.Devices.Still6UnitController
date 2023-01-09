@@ -21,3 +21,13 @@ method = "symmetric_key"
 registration_id = "$env:DEVICEID"
 symmetric_key = { value = "$env:DEVICEKEY" }
 ```
+
+To create one of these, I'm currently using the setup scripts in filtermodule.
+
+```powershell
+. .env.ps1
+$env:DEVICEID = "...mac address on my development pc..."
+cd setup
+./MakeDeviceKey.ps1
+./GenerateDeviceConfig.ps1
+```
