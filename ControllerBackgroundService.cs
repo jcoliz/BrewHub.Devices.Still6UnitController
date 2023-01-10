@@ -141,7 +141,12 @@ public sealed class Worker : BackgroundService
                 security!.GetPrimaryKey());
             _logger.LogInformation(LogEvents.ConnectAuth,"Connection: Created SK Auth");
 
-            iotClient = DeviceClient.Create(result.AssignedHub, auth, TransportType.Mqtt);
+            var options = new ClientOptions
+            {
+                ModelId = "dtmi:brewhub:controller:still;1"
+            };
+
+            iotClient = DeviceClient.Create(result.AssignedHub, auth, TransportType.Mqtt, options);
             _logger.LogInformation(LogEvents.ConnectOK,"Connection: OK. {info}", iotClient.ProductInfo);
 
     #if false        
@@ -162,9 +167,69 @@ public sealed class Worker : BackgroundService
 
     private async Task SendTelemetry()
     {
-        var text = "TestMessage";
-        using var message = new Message(Encoding.UTF8.GetBytes(text));
-        await iotClient!.SendEventAsync(message);
-        _logger.LogInformation(LogEvents.TelemetryOK,"Telemetry: OK. Sent {text}", text);
+        if (MachineryInfo is not null && MachineryInfo?.Configuration.Sensors.Count > 0)
+        {
+            // Consider each connected sensor in the configuration
+            int position = 1; 
+            foreach(var sensor in MachineryInfo.Configuration.Sensors)
+            {
+                // Note that official PnP messages can only come from a single component at a time.
+                // This is a weakness that drives up the message count. So, will have to decide later
+                // if it's worth keeping this, or scrapping PnP compatibility and collecting them all
+                // into a single message.
+
+                // Take the reading for that sensor
+                Dictionary<string,object> readings = new();
+                var fakereading = DateTime.Now.Minute + sensor.Value * 10;
+                readings["temperature"] = fakereading;
+                readings["humidity"] = 100 - fakereading;
+
+                // Make a message out of it
+                var component = $"Sensor_{position++}";
+                using var message = CreateMessage(readings,component);
+
+                // Send the message
+                await iotClient!.SendEventAsync(message);
+                _logger.LogInformation(LogEvents.TelemetryOK,"Telemetry: OK. Sent readings for {component} ({name})", component, sensor.Key);
+            }
+        }
+        else
+        {
+            _logger.LogWarning(LogEvents.TelemetryNoMachinery,"Telemetry: No machinery info found. Nothing sent");
+        }
     }
+
+    // Below is from https://github.com/Azure/azure-iot-sdk-csharp/blob/1e97d800061aca1ab812ea32d47bac2442c1ed26/iothub/device/samples/solutions/PnpDeviceSamples/PnpConvention/PnpConvention.cs#L40
+
+    /// <summary>
+    /// Create a plug and play compatible telemetry message.
+    /// </summary>
+    /// <param name="componentName">The name of the component in which the telemetry is defined. Can be null for telemetry defined under the root interface.</param>
+    /// <param name="telemetryPairs">The unserialized name and value telemetry pairs, as defined in the DTDL interface. Names must be 64 characters or less. For more details see
+    /// <see href="https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#telemetry"/>.</param>
+    /// <param name="encoding">The character encoding to be used when encoding the message body to bytes. This defaults to utf-8.</param>
+    /// <returns>A plug and play compatible telemetry message, which can be sent to IoT Hub. The caller must dispose this object when finished.</returns>
+    public static Message CreateMessage(IDictionary<string, object> telemetryPairs, string? componentName = default, Encoding? encoding = default)
+    {
+        if (telemetryPairs == null)
+        {
+            throw new ArgumentNullException(nameof(telemetryPairs));
+        }
+
+        Encoding messageEncoding = encoding ?? Encoding.UTF8;
+        string payload = JsonSerializer.Serialize(telemetryPairs);
+        var message = new Message(messageEncoding.GetBytes(payload))
+        {
+            ContentEncoding = messageEncoding.WebName,
+            ContentType = ContentApplicationJson,
+        };
+
+        if (!string.IsNullOrWhiteSpace(componentName))
+        {
+            message.ComponentName = componentName;
+        }
+
+        return message;
+    }
+    private const string ContentApplicationJson = "application/json";
 }

@@ -26,6 +26,7 @@ public class LogEvents
 
     // 5. Telemetry
     public const int TelemetryOK        = 500;
+    public const int TelemetryNoMachinery = 570;
 
     // 6. Command
 
