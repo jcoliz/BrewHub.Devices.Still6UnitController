@@ -22,6 +22,7 @@ public sealed class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _logger.LogInformation(LogEvents.ExecuteStartOK,"BrewHub Controller Service: Started OK");
         await ProvisionDevice();
         await OpenConnection();
         while (!stoppingToken.IsCancellationRequested)
@@ -33,7 +34,7 @@ public sealed class Worker : BackgroundService
         if (iotClient is not null)
             await iotClient.CloseAsync();
 
-        _logger.LogInformation("Finished");
+        _logger.LogInformation(LogEvents.ExecuteFinished,"BrewHub Controller Service: Stopped");
     }
 
     private async Task ProvisionDevice()
@@ -52,7 +53,7 @@ public sealed class Worker : BackgroundService
             Console.WriteLine(json);
 #endif
 
-            _logger.LogInformation($"Initializing the device provisioning client");
+            _logger.LogInformation(LogEvents.ProvisionConfig,"Provisioning: Loaded config");
 
             // For group enrollments, the second parameter must be the derived device key.
             // See the ComputeDerivedSymmetricKeySample for how to generate the derived key.
@@ -71,23 +72,22 @@ public sealed class Worker : BackgroundService
                 security,
                 transportHandler);
 
-            _logger.LogInformation("Initialized for registration Id {id}", security.GetRegistrationID());
+            _logger.LogInformation(LogEvents.ProvisionInit,"Provisioning: Initialized {id}", security.GetRegistrationID());
 
-            _logger.LogInformation("Registering with the device provisioning service");
             result = await provClient.RegisterAsync();
 
-            _logger.LogInformation("Registration status {status}", result.Status);
+            _logger.LogInformation(LogEvents.ProvisionStatus,"Provisioning: Status {status}", result.Status);
             if (result.Status != ProvisioningRegistrationStatusType.Assigned)
             {
-                _logger.LogCritical($"Registration status did not assign a hub");
+                _logger.LogCritical(LogEvents.ProvisionFailed,"Provisioning: Failed");
                 return;
             }
 
-            _logger.LogInformation("Device {id} registered to {hub}", result.DeviceId, result.AssignedHub);
+            _logger.LogInformation(LogEvents.ProvisionOK,"Provisioning: OK. Device {id} on Hub {hub}", result.DeviceId, result.AssignedHub);
         }
         catch (Exception ex)
         {
-            _logger.LogError("ERROR {message}", ex.Message);
+            _logger.LogError(LogEvents.ProvisionError,"Provisioning: Error {message}", ex.Message);
         }
     }
 
@@ -98,13 +98,13 @@ public sealed class Worker : BackgroundService
             // NOTE we can now store the device registration result to storage, and use it next time
             // to not have to run the above registration flow again
 
-            _logger.LogInformation("Creating symmetric key authentication for IoT Hub");
             IAuthenticationMethod auth = new DeviceAuthenticationWithRegistrySymmetricKey(
                 result!.DeviceId,
                 security!.GetPrimaryKey());
+            _logger.LogInformation(LogEvents.ConnectAuth,"Connection: Created SK Auth");
 
-            _logger.LogInformation("Connecting to IoT Hub");
             iotClient = DeviceClient.Create(result.AssignedHub, auth, TransportType.Mqtt);
+            _logger.LogInformation(LogEvents.ConnectOK,"Connection: OK. {info}", iotClient.ProductInfo);
 
     #if false        
             // Attach a callback for updates to the module twin's desired properties.
@@ -116,7 +116,7 @@ public sealed class Worker : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError("ERROR {message}", ex.Message);
+            _logger.LogError(LogEvents.ConnectError,"Connection: Error {message}", ex.Message);
         }
 
         return Task.CompletedTask;
@@ -127,6 +127,6 @@ public sealed class Worker : BackgroundService
         var text = "TestMessage";
         using var message = new Message(Encoding.UTF8.GetBytes(text));
         await iotClient!.SendEventAsync(message);
-        _logger.LogInformation("Sent message {text}", text);
+        _logger.LogInformation(LogEvents.TelemetryOK,"Telemetry: OK. Sent {text}", text);
     }
 }
