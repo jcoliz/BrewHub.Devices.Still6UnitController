@@ -6,23 +6,28 @@ public class LogEvents
     public const int ExecuteStartOK     = 100;
     public const int ExecuteFinished    = 101;
 
-    // 2. Provision
-    public const int ProvisionConfig    = 201;
-    public const int ProvisionInit      = 202;
-    public const int ProvisionStatus    = 203;
-    public const int ProvisionOK        = 200;
-    public const int ProvisionError     = 280;
-    public const int ProvisionFailed    = 290;
+    // 2. Config
+    public const int ConfigLoaded       = 201;
+    public const int ConfigOK           = 200;
+    public const int ConfigError        = 280;
 
-    // 3. Connect
-    public const int ConnectAuth        = 301;
-    public const int ConnectOK          = 300;
-    public const int ConnectError       = 380;
+    // 3. Provision
+    public const int ProvisionConfig    = 301;
+    public const int ProvisionInit      = 302;
+    public const int ProvisionStatus    = 303;
+    public const int ProvisionOK        = 300;
+    public const int ProvisionError     = 380;
+    public const int ProvisionFailed    = 390;
 
-    // 4. Telemetry
-    public const int TelemetryOK        = 400;
+    // 4. Connect
+    public const int ConnectAuth        = 401;
+    public const int ConnectOK          = 400;
+    public const int ConnectError       = 480;
 
-    // 5. Command
+    // 5. Telemetry
+    public const int TelemetryOK        = 500;
 
-    // 6. Property
+    // 6. Command
+
+    // 7. Property
 }

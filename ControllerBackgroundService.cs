@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Microsoft.Azure.Devices.Client;
 using Microsoft.Azure.Devices.Provisioning.Client;
 using Microsoft.Azure.Devices.Provisioning.Client.Transport;
@@ -15,6 +16,8 @@ public sealed class Worker : BackgroundService
     private SecurityProviderSymmetricKey? security;
     private DeviceRegistrationResult? result;
 
+    private MachineryInfo? MachineryInfo;
+
     public Worker(ILogger<Worker> logger)
     {
         _logger = logger;
@@ -23,6 +26,7 @@ public sealed class Worker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation(LogEvents.ExecuteStartOK,"BrewHub Controller Service: Started OK");
+        await LoadConfig();
         await ProvisionDevice();
         await OpenConnection();
         while (!stoppingToken.IsCancellationRequested)
@@ -35,6 +39,40 @@ public sealed class Worker : BackgroundService
             await iotClient.CloseAsync();
 
         _logger.LogInformation(LogEvents.ExecuteFinished,"BrewHub Controller Service: Stopped");
+    }
+
+    private async Task LoadConfig()
+    {
+        // Machinery info can OPTIONALLY be supplied via local machine config.
+        // Alternately, it can be sent down from the cloud as a desired property
+
+        try
+        {
+            if (File.Exists("machineryinfo.json"))
+            {
+                using var stream = File.OpenRead("machineryinfo.json");
+                var options = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+                MachineryInfo = await JsonSerializer.DeserializeAsync<MachineryInfo>(stream,options);
+
+                if (MachineryInfo is null)
+                    throw new ApplicationException("Unable to load machinery info file");
+
+                _logger.LogInformation(LogEvents.ConfigLoaded,"Config: Loaded for {maker} {model}", 
+                    MachineryInfo?.Manufacturer ?? "(null)",
+                    MachineryInfo?.Model ?? "(null)"
+                    );
+            }
+            else
+            {
+                _logger.LogInformation("Config: No machineryinfo.json found. Starting unconfigured.");
+            }
+
+            _logger.LogInformation(LogEvents.ConfigOK,"Config: OK");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(LogEvents.ConfigError,"Config: Error {message}", ex.Message);
+        }
     }
 
     private async Task ProvisionDevice()
