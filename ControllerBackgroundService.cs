@@ -41,12 +41,14 @@ public sealed class Worker : BackgroundService
 
             if (iotClient is not null)
                 await iotClient.CloseAsync();
-
+        }
+        catch (TaskCanceledException)
+        {
             _logger.LogInformation(LogEvents.ExecuteFinished,"BrewHub Controller Service: Stopped");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            _logger.LogCritical(LogEvents.ExecuteFailed,"BrewHub Controller Service: Failed");
+            _logger.LogCritical(LogEvents.ExecuteFailed,"BrewHub Controller Service: Failed {type} {message}", ex.GetType().Name, ex.Message);
         }
     }
 
