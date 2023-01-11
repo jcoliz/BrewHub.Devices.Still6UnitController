@@ -5,6 +5,7 @@ public class LogEvents
     // 1. Execute
     public const int ExecuteStartOK     = 100;
     public const int ExecuteFinished    = 101;
+    public const int ExecuteFailed      = 190;
 
     // 2. Config
     public const int ConfigLoaded       = 201;

@@ -18,6 +18,8 @@ public sealed class Worker : BackgroundService
 
     private MachineryInfo? MachineryInfo;
 
+    private const string dtmi = "dtmi:brewhub:controller:still;1";
+
     public Worker(ILogger<Worker> logger)
     {
         _logger = logger;
@@ -25,20 +27,27 @@ public sealed class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation(LogEvents.ExecuteStartOK,"BrewHub Controller Service: Started OK");
-        await LoadConfig();
-        await ProvisionDevice();
-        await OpenConnection();
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            await SendTelemetry();
-            await Task.Delay(30_000, stoppingToken);
+            _logger.LogInformation(LogEvents.ExecuteStartOK,"BrewHub Controller Service: Started OK");
+            await LoadConfig();
+            await ProvisionDevice();
+            await OpenConnection();
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                await SendTelemetry();
+                await Task.Delay(30_000, stoppingToken);
+            }
+
+            if (iotClient is not null)
+                await iotClient.CloseAsync();
+
+            _logger.LogInformation(LogEvents.ExecuteFinished,"BrewHub Controller Service: Stopped");
         }
-
-        if (iotClient is not null)
-            await iotClient.CloseAsync();
-
-        _logger.LogInformation(LogEvents.ExecuteFinished,"BrewHub Controller Service: Stopped");
+        catch (Exception)
+        {
+            _logger.LogCritical(LogEvents.ExecuteFailed,"BrewHub Controller Service: Failed");
+        }
     }
 
     private async Task LoadConfig()
@@ -72,6 +81,7 @@ public sealed class Worker : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(LogEvents.ConfigError,"Config: Error {message}", ex.Message);
+            throw;
         }
     }
 
@@ -118,7 +128,7 @@ public sealed class Worker : BackgroundService
             if (result.Status != ProvisioningRegistrationStatusType.Assigned)
             {
                 _logger.LogCritical(LogEvents.ProvisionFailed,"Provisioning: Failed");
-                return;
+                throw new ApplicationException("Failed");
             }
 
             _logger.LogInformation(LogEvents.ProvisionOK,"Provisioning: OK. Device {id} on Hub {hub}", result.DeviceId, result.AssignedHub);
@@ -126,6 +136,7 @@ public sealed class Worker : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(LogEvents.ProvisionError,"Provisioning: Error {message}", ex.Message);
+            throw;
         }
     }
 
@@ -143,7 +154,7 @@ public sealed class Worker : BackgroundService
 
             var options = new ClientOptions
             {
-                ModelId = "dtmi:brewhub:controller:still;1"
+                ModelId = dtmi
             };
 
             iotClient = DeviceClient.Create(result.AssignedHub, auth, TransportType.Mqtt, options);
@@ -160,6 +171,7 @@ public sealed class Worker : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(LogEvents.ConnectError,"Connection: Error {message}", ex.Message);
+            throw;
         }
 
         return Task.CompletedTask;
