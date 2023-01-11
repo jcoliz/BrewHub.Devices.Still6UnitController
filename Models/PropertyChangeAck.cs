@@ -1,4 +1,4 @@
-namespace BrewHub.Controller;
+namespace BrewHub.Controller.Models;
 
 using System.Text.Json.Serialization;
 

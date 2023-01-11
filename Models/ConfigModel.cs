@@ -1,6 +1,6 @@
 using Tomlyn.Model;
 
-namespace BrewHub.Controller;
+namespace BrewHub.Controller.Models;
 
 public class ConfigModel : ITomlMetadataProvider
 {

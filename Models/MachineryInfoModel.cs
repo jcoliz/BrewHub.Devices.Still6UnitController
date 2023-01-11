@@ -1,4 +1,4 @@
-namespace BrewHub;
+namespace BrewHub.Controller.Models;
 
 // Matches dtmi:brewhub:controller:still-1 "MachineryInfo" property
 public class MachineryInfo

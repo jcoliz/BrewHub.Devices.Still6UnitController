@@ -6,6 +6,7 @@ using Microsoft.Azure.Devices.Provisioning.Client;
 using Microsoft.Azure.Devices.Provisioning.Client.Transport;
 using Microsoft.Azure.Devices.Shared;
 using Tomlyn;
+using BrewHub.Controller.Models;
 
 namespace BrewHub.Controller;
 
