@@ -4,7 +4,7 @@ public class LogEvents
 {
     // Conventions:
     // xx__: Which major section of the application is it in
-    // __9_: Critical failures
+    // __9_: Critical failures. Unrecoverable errors which will cause application to exit
     // __8_: Errors
     // __7_: Warnings
     // __00: OK. Major section complete

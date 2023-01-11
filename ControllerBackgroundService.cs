@@ -88,7 +88,7 @@ public sealed class Worker : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(LogEvents.ConfigError,"Config: Error {message}", ex.Message);
+            _logger.LogCritical(LogEvents.ConfigError,"Config: Error {message}", ex.Message);
             throw;
         }
     }
@@ -135,15 +135,14 @@ public sealed class Worker : BackgroundService
             _logger.LogDebug(LogEvents.ProvisionStatus,"Provisioning: Status {status}", result.Status);
             if (result.Status != ProvisioningRegistrationStatusType.Assigned)
             {
-                _logger.LogCritical(LogEvents.ProvisionFailed,"Provisioning: Failed");
-                throw new ApplicationException("Failed");
+                throw new ApplicationException($"Failed. Status: {result.Status} {result.Substatus}");
             }
 
             _logger.LogInformation(LogEvents.ProvisionOK,"Provisioning: OK. Device {id} on Hub {hub}", result.DeviceId, result.AssignedHub);
         }
         catch (Exception ex)
         {
-            _logger.LogError(LogEvents.ProvisionError,"Provisioning: Error {message}", ex.Message);
+            _logger.LogCritical(LogEvents.ProvisionError,"Provisioning: Error {message}", ex.Message);
             throw;
         }
     }
@@ -182,7 +181,7 @@ public sealed class Worker : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(LogEvents.ConnectError,"Connection: Error {message}", ex.Message);
+            _logger.LogCritical(LogEvents.ConnectError,"Connection: Error {message}", ex.Message);
             throw;
         }
     }
