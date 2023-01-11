@@ -50,9 +50,9 @@ public class LogEvents
     public const int PropertyMultipleFailure = 2082;
     public const int PropertyTelemetryPeriodOK = 2100;
     public const int PropertyTelemetryPeriodResponse = 2101; 
-    public const int PropertyTelemetryPeriodNotString = 2181;
-    public const int PropertyTelemetryPeriodBadFormat = 2182;
-    public const int Property1Error     = 2180;
-    public const int Property2OK        = 2200;
-    public const int Property2Error     = 2280;
+    public const int PropertyTelemetryPeriodReadFailure = 2181;
+    public const int PropertyTelemetryPeriodFormatFailure = 2182;
+    public const int PropertyMachineryInfoOK = 2200;
+    public const int PropertyMachineryInfoResponse = 2201;
+    public const int PropertyMachineryInfoParseFailure = 2281;
 }

@@ -294,12 +294,56 @@ public sealed class Worker : BackgroundService
                     }
                     catch (FormatException ex)
                     {
-                        _logger.LogError(LogEvents.PropertyTelemetryPeriodBadFormat,"Property: TelemetryPeriod failed to convert {token} to timespan. {message}", desired, ex.Message);
+                        _logger.LogError(LogEvents.PropertyTelemetryPeriodFormatFailure,"Property: TelemetryPeriod failed to convert {token} to timespan. {message}", desired, ex.Message);
                     }
                 }
                 else
                 {
-                    _logger.LogError(LogEvents.PropertyTelemetryPeriodNotString,"Property: TelemetryPeriod failed to convert {token} to string", desired);
+                    _logger.LogError(LogEvents.PropertyTelemetryPeriodReadFailure,"Property: TelemetryPeriod failed to read {token}", desired);
+                }
+            }
+            
+            if (desiredProperties.Contains("machineryInfo"))
+            {
+                var token = desiredProperties["machineryInfo"];
+                var desired = token as Newtonsoft.Json.Linq.JObject;
+
+                if (desired is not null)
+                {
+                    try
+                    {
+                        // Actually update the property in memory
+
+                        MachineryInfo = desired.ToObject<MachineryInfo>();
+                        if (MachineryInfo is null)
+                            throw new FormatException("JSON parse failure");
+    
+                        _logger.LogInformation(LogEvents.PropertyMachineryInfoOK,"Property: MachineryInfo OK. Updated to {maker} {model}",MachineryInfo!.Manufacturer,MachineryInfo.Model);
+
+                        // Acknowledge the request back to hub
+                        var response = new Dictionary<string,PropertyChangeAck>();
+                        var ack = new PropertyChangeAck() 
+                        {
+                            PropertyValue = MachineryInfo,
+                            AckCode = HttpStatusCode.OK,
+                            AckVersion = desiredProperties.Version,
+                            AckDescription = "OK"
+                        };
+                        response.Add("machineryInfo",ack);
+                        var json = JsonSerializer.Serialize(response);
+                        var responsetc = new TwinCollection(json);
+                        await iotClient!.UpdateReportedPropertiesAsync(responsetc);
+
+                        _logger.LogDebug(LogEvents.PropertyTelemetryPeriodResponse, "Property: MachineryInfo responded to server with {response}",json);
+                    }
+                    catch (FormatException ex)
+                    {
+                        _logger.LogError(LogEvents.PropertyTelemetryPeriodFormatFailure,"Property: MachineryInfo failed to convert {token} to timespan. {message}", desired, ex.Message);
+                    }
+                }
+                else
+                {
+                    _logger.LogError(LogEvents.PropertyTelemetryPeriodReadFailure,"Property: MachineryInfo failed to convert {token} to string", desired);
                 }
             }
         }
