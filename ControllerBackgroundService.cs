@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Xml;
 using Microsoft.Azure.Devices.Client;
 using Microsoft.Azure.Devices.Provisioning.Client;
 using Microsoft.Azure.Devices.Provisioning.Client.Transport;
@@ -17,6 +18,7 @@ public sealed class Worker : BackgroundService
     private DeviceRegistrationResult? result;
 
     private MachineryInfo? MachineryInfo;
+    private TimeSpan TelemetryPeriod = TimeSpan.FromSeconds(30);
 
     private const string dtmi = "dtmi:brewhub:controller:still;1";
 
@@ -36,7 +38,7 @@ public sealed class Worker : BackgroundService
             while (!stoppingToken.IsCancellationRequested)
             {
                 await SendTelemetry();
-                await Task.Delay(30_000, stoppingToken);
+                await Task.Delay(TelemetryPeriod, stoppingToken);
             }
 
             if (iotClient is not null)
@@ -252,8 +254,30 @@ public sealed class Worker : BackgroundService
     {
         try
         {
-            _logger.LogDebug(LogEvents.PropertyRequest, "Property change: {property}",desiredProperties.ToJson());
+            _logger.LogDebug(LogEvents.PropertyRequest, "Property change: {request}",desiredProperties.ToJson());
 
+            if (desiredProperties.Contains("TelemetryPeriod"))
+            {
+                var token = desiredProperties["TelemetryPeriod"];
+                var desired = (string)token;
+
+                if (desired is not null)
+                {
+                    try
+                    {
+                        TelemetryPeriod = XmlConvert.ToTimeSpan(desired);
+                        _logger.LogInformation(LogEvents.PropertyTelemetryPeriodOK,"Property change: TelemetryPeriod OK. Set to {period}",TelemetryPeriod);
+                    }
+                    catch (FormatException ex)
+                    {
+                        _logger.LogError(LogEvents.PropertyTelemetryPeriodBadFormat,"Property change: TelemetryPeriod failed to convert {token} to timespan. {message}", desired, ex.Message);
+                    }
+                }
+                else
+                {
+                    _logger.LogError(LogEvents.PropertyTelemetryPeriodNotString,"Property change: TelemetryPeriod failed to convert {token} to string", desired);
+                }
+            }
         }
         catch (AggregateException ex)
         {
