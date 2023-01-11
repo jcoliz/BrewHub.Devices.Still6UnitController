@@ -142,7 +142,7 @@ public sealed class Worker : BackgroundService
         }
     }
 
-    private Task OpenConnection()
+    private async Task OpenConnection()
     {
         try
         {
@@ -162,10 +162,10 @@ public sealed class Worker : BackgroundService
             iotClient = DeviceClient.Create(result.AssignedHub, auth, TransportType.Mqtt, options);
             _logger.LogInformation(LogEvents.ConnectOK,"Connection: OK. {info}", iotClient.ProductInfo);
 
-    #if false        
             // Attach a callback for updates to the module twin's desired properties.
-            await _moduleClient.SetDesiredPropertyUpdateCallbackAsync(OnDesiredPropertiesUpdate, null);
+            await iotClient.SetDesiredPropertyUpdateCallbackAsync(OnDesiredPropertiesUpdate, null);
 
+    #if false        
             // Register callback for health check command
             await _moduleClient.SetMethodHandlerAsync(HealthCheckCommand, HealthCheckAsync, null);
     #endif
@@ -175,8 +175,6 @@ public sealed class Worker : BackgroundService
             _logger.LogError(LogEvents.ConnectError,"Connection: Error {message}", ex.Message);
             throw;
         }
-
-        return Task.CompletedTask;
     }
 
     private async Task SendTelemetry()
@@ -249,4 +247,26 @@ public sealed class Worker : BackgroundService
         return message;
     }
     private const string ContentApplicationJson = "application/json";
+
+    private Task OnDesiredPropertiesUpdate(TwinCollection desiredProperties, object userContext)
+    {
+        try
+        {
+            _logger.LogDebug(LogEvents.PropertyRequest, "Property change: {property}",desiredProperties.ToJson());
+
+        }
+        catch (AggregateException ex)
+        {
+            foreach (Exception exception in ex.InnerExceptions)
+            {
+                _logger.LogError(LogEvents.PropertyMultipleFailure, exception, "Property change: Multiple failures");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(LogEvents.PropertySingleFailure,ex,"Property change: Failed");
+        }
+
+        return Task.CompletedTask;
+    }
 }

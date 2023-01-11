@@ -45,6 +45,9 @@ public class LogEvents
     public const int Command2Error     = 1280;
 
     // 20. Properties
+    public const int PropertyRequest = 2001;
+    public const int PropertySingleFailure = 2081;
+    public const int PropertyMultipleFailure = 2082;
     public const int Property1OK       = 2100;
     public const int Property1Error     = 2180;
     public const int Property2OK        = 2200;
