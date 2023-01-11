@@ -250,7 +250,7 @@ public sealed class Worker : BackgroundService
     }
     private const string ContentApplicationJson = "application/json";
 
-    private Task OnDesiredPropertiesUpdate(TwinCollection desiredProperties, object userContext)
+    private async Task OnDesiredPropertiesUpdate(TwinCollection desiredProperties, object userContext)
     {
         try
         {
@@ -265,8 +265,25 @@ public sealed class Worker : BackgroundService
                 {
                     try
                     {
+                        // Actually update the property in memory
                         TelemetryPeriod = XmlConvert.ToTimeSpan(desired);
                         _logger.LogInformation(LogEvents.PropertyTelemetryPeriodOK,"Property change: TelemetryPeriod OK. Set to {period}",TelemetryPeriod);
+
+                        // Acknowledge the request back to hub
+                        var response = new Dictionary<string,PropertyChangeAck>();
+                        var ack = new PropertyChangeAck() 
+                        {
+                            PropertyValue = desired,
+                            AckCode = 200,
+                            AckVersion = desiredProperties.Version,
+                            AckDescription = "OK"
+                        };
+                        response.Add("TelemetryPeriod",ack);
+                        var json = JsonSerializer.Serialize(response);
+                        var responsetc = new TwinCollection(json);
+                        await iotClient!.UpdateReportedPropertiesAsync(responsetc);
+
+                        _logger.LogDebug(LogEvents.PropertyTelemetryPeriodResponse, "Property change: TelemetryPeriod responded to server with {response}",json);
                     }
                     catch (FormatException ex)
                     {
@@ -290,7 +307,5 @@ public sealed class Worker : BackgroundService
         {
             _logger.LogError(LogEvents.PropertySingleFailure,ex,"Property change: Failed");
         }
-
-        return Task.CompletedTask;
     }
 }
