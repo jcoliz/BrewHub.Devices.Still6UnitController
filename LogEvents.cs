@@ -2,6 +2,13 @@ namespace BrewHub.Controller;
 
 public class LogEvents
 {
+    // Conventions:
+    // xx__: Which major section of the application is it in
+    // __9_: Critical failures
+    // __8_: Errors
+    // __7_: Warnings
+    // __00: OK. Major section complete
+
     // 1. Execute
     public const int ExecuteStartOK     = 100;
     public const int ExecuteFinished    = 101;
@@ -29,7 +36,15 @@ public class LogEvents
     public const int TelemetryOK        = 500;
     public const int TelemetryNoMachinery = 570;
 
-    // 6. Command
+    // 10. Commands
+    public const int Command1OK        = 1100;
+    public const int Command1Error     = 1180;
+    public const int Command2OK        = 1200;
+    public const int Command2Error     = 1280;
 
-    // 7. Property
+    // 20. Properties
+    public const int Property1OK       = 2100;
+    public const int Property1Error     = 2180;
+    public const int Property2OK        = 2200;
+    public const int Property2Error     = 2280;
 }
