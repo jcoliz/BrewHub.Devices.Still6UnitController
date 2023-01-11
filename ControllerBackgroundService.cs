@@ -68,17 +68,17 @@ public sealed class Worker : BackgroundService
                 if (MachineryInfo is null)
                     throw new ApplicationException("Unable to load machinery info file");
 
-                _logger.LogInformation(LogEvents.ConfigLoaded,"Config: Loaded for {maker} {model}", 
+                _logger.LogDebug(LogEvents.ConfigLoaded,"Config: Loaded for {maker} {model}", 
                     MachineryInfo?.Manufacturer ?? "(null)",
                     MachineryInfo?.Model ?? "(null)"
                     );
             }
             else
             {
-                _logger.LogInformation("Config: No machineryinfo.json found. Starting unconfigured.");
+                _logger.LogDebug("Config: No machineryinfo.json found. Starting unconfigured.");
             }
 
-            _logger.LogInformation(LogEvents.ConfigOK,"Config: OK");
+            _logger.LogInformation(LogEvents.ConfigOK,"Config: OK {machine}",MachineryInfo?.Model ?? "Empty");
         }
         catch (Exception ex)
         {
@@ -103,7 +103,7 @@ public sealed class Worker : BackgroundService
             Console.WriteLine(json);
 #endif
 
-            _logger.LogInformation(LogEvents.ProvisionConfig,"Provisioning: Loaded config");
+            _logger.LogDebug(LogEvents.ProvisionConfig,"Provisioning: Loaded config");
 
             // For group enrollments, the second parameter must be the derived device key.
             // See the ComputeDerivedSymmetricKeySample for how to generate the derived key.
@@ -122,11 +122,11 @@ public sealed class Worker : BackgroundService
                 security,
                 transportHandler);
 
-            _logger.LogInformation(LogEvents.ProvisionInit,"Provisioning: Initialized {id}", security.GetRegistrationID());
+            _logger.LogDebug(LogEvents.ProvisionInit,"Provisioning: Initialized {id}", security.GetRegistrationID());
 
             result = await provClient.RegisterAsync();
 
-            _logger.LogInformation(LogEvents.ProvisionStatus,"Provisioning: Status {status}", result.Status);
+            _logger.LogDebug(LogEvents.ProvisionStatus,"Provisioning: Status {status}", result.Status);
             if (result.Status != ProvisioningRegistrationStatusType.Assigned)
             {
                 _logger.LogCritical(LogEvents.ProvisionFailed,"Provisioning: Failed");
@@ -152,7 +152,7 @@ public sealed class Worker : BackgroundService
             IAuthenticationMethod auth = new DeviceAuthenticationWithRegistrySymmetricKey(
                 result!.DeviceId,
                 security!.GetPrimaryKey());
-            _logger.LogInformation(LogEvents.ConnectAuth,"Connection: Created SK Auth");
+            _logger.LogDebug(LogEvents.ConnectAuth,"Connection: Created SK Auth");
 
             var options = new ClientOptions
             {
@@ -184,7 +184,7 @@ public sealed class Worker : BackgroundService
         if (MachineryInfo is not null && MachineryInfo?.Configuration.Sensors.Count > 0)
         {
             // Consider each connected sensor in the configuration
-            int position = 1; 
+            int position = 0;
             foreach(var sensor in MachineryInfo.Configuration.Sensors)
             {
                 // Note that official PnP messages can only come from a single component at a time.
@@ -199,13 +199,16 @@ public sealed class Worker : BackgroundService
                 readings["humidity"] = 100 - fakereading;
 
                 // Make a message out of it
-                var component = $"Sensor_{position++}";
+                var component = $"Sensor_{++position}";
                 using var message = CreateMessage(readings,component);
 
                 // Send the message
                 await iotClient!.SendEventAsync(message);
-                _logger.LogInformation(LogEvents.TelemetryOK,"Telemetry: OK. Sent readings for {component} ({name})", component, sensor.Key);
+                var detailslist = readings.Select(x=>$"{x.Key}={x.Value:F1}");
+                var details = string.Join(' ',detailslist);
+                _logger.LogDebug(LogEvents.TelemetrySentOne,"Telemetry: {component} ({name}) {details}", component, sensor.Key, details);
             }
+            _logger.LogInformation(LogEvents.TelemetryOK,"Telemetry: OK {count} messages",position);            
         }
         else
         {

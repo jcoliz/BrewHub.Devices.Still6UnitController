@@ -8,6 +8,7 @@ public class LogEvents
     // __8_: Errors
     // __7_: Warnings
     // __00: OK. Major section complete
+    // __[1-6][1-9]: Generally should be debug-level messages. Put the big stuff in the OK log
 
     // 1. Execute
     public const int ExecuteStartOK     = 100;
@@ -34,6 +35,7 @@ public class LogEvents
 
     // 5. Telemetry
     public const int TelemetryOK        = 500;
+    public const int TelemetrySentOne   = 501;
     public const int TelemetryNoMachinery = 570;
 
     // 10. Commands
