@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿// Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
+
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using BrewHub.Controller;
 

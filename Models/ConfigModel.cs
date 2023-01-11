@@ -1,3 +1,5 @@
+// Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
+
 using Tomlyn.Model;
 
 namespace BrewHub.Controller.Models;

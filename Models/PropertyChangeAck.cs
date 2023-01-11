@@ -1,7 +1,9 @@
-namespace BrewHub.Controller.Models;
+// Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
 using System.Net;
 using System.Text.Json.Serialization;
+
+namespace BrewHub.Controller.Models;
 
 public class PropertyChangeAck
 {

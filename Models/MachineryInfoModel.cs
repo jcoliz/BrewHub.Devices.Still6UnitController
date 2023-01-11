@@ -1,3 +1,5 @@
+// Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
+
 namespace BrewHub.Controller.Models;
 
 // Matches dtmi:brewhub:controller:still-1 "MachineryInfo" property
