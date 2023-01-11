@@ -7,6 +7,7 @@ using Microsoft.Azure.Devices.Provisioning.Client.Transport;
 using Microsoft.Azure.Devices.Shared;
 using Tomlyn;
 using BrewHub.Controller.Models;
+using System.Net;
 
 namespace BrewHub.Controller;
 
@@ -275,7 +276,7 @@ public sealed class Worker : BackgroundService
                         var ack = new PropertyChangeAck() 
                         {
                             PropertyValue = desired,
-                            AckCode = 200,
+                            AckCode = HttpStatusCode.OK,
                             AckVersion = desiredProperties.Version,
                             AckDescription = "OK"
                         };

@@ -1,5 +1,6 @@
 namespace BrewHub.Controller.Models;
 
+using System.Net;
 using System.Text.Json.Serialization;
 
 public class PropertyChangeAck
@@ -14,7 +15,7 @@ public class PropertyChangeAck
     /// The acknowledgement code, usually an HTTP Status Code e.g. 200, 400.
     /// </summary>
     [JsonPropertyName("ac")]
-    public int AckCode { get; set; }
+    public HttpStatusCode AckCode { get; set; }
 
     /// <summary>
     /// The acknowledgement version, as supplied in the property update request.
