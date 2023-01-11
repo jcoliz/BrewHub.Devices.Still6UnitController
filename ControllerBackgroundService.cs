@@ -166,6 +166,10 @@ public sealed class Worker : BackgroundService
             iotClient = DeviceClient.Create(result.AssignedHub, auth, TransportType.Mqtt, options);
             _logger.LogInformation(LogEvents.ConnectOK,"Connection: OK. {info}", iotClient.ProductInfo);
 
+            // Read the current state of desired properties and set the local values as desired
+            var twin = await iotClient.GetTwinAsync().ConfigureAwait(false);
+            await OnDesiredPropertiesUpdate(twin.Properties.Desired, this);
+
             // Attach a callback for updates to the module twin's desired properties.
             await iotClient.SetDesiredPropertyUpdateCallbackAsync(OnDesiredPropertiesUpdate, null);
 
@@ -256,7 +260,7 @@ public sealed class Worker : BackgroundService
     {
         try
         {
-            _logger.LogDebug(LogEvents.PropertyRequest, "Property change: {request}",desiredProperties.ToJson());
+            _logger.LogDebug(LogEvents.PropertyRequest, "Property: Desired {request}",desiredProperties.ToJson());
 
             if (desiredProperties.Contains("TelemetryPeriod"))
             {
@@ -269,7 +273,7 @@ public sealed class Worker : BackgroundService
                     {
                         // Actually update the property in memory
                         TelemetryPeriod = XmlConvert.ToTimeSpan(desired);
-                        _logger.LogInformation(LogEvents.PropertyTelemetryPeriodOK,"Property change: TelemetryPeriod OK. Set to {period}",TelemetryPeriod);
+                        _logger.LogInformation(LogEvents.PropertyTelemetryPeriodOK,"Property: TelemetryPeriod OK. Updated to {period}",TelemetryPeriod);
 
                         // Acknowledge the request back to hub
                         var response = new Dictionary<string,PropertyChangeAck>();
@@ -285,16 +289,16 @@ public sealed class Worker : BackgroundService
                         var responsetc = new TwinCollection(json);
                         await iotClient!.UpdateReportedPropertiesAsync(responsetc);
 
-                        _logger.LogDebug(LogEvents.PropertyTelemetryPeriodResponse, "Property change: TelemetryPeriod responded to server with {response}",json);
+                        _logger.LogDebug(LogEvents.PropertyTelemetryPeriodResponse, "Property: TelemetryPeriod responded to server with {response}",json);
                     }
                     catch (FormatException ex)
                     {
-                        _logger.LogError(LogEvents.PropertyTelemetryPeriodBadFormat,"Property change: TelemetryPeriod failed to convert {token} to timespan. {message}", desired, ex.Message);
+                        _logger.LogError(LogEvents.PropertyTelemetryPeriodBadFormat,"Property: TelemetryPeriod failed to convert {token} to timespan. {message}", desired, ex.Message);
                     }
                 }
                 else
                 {
-                    _logger.LogError(LogEvents.PropertyTelemetryPeriodNotString,"Property change: TelemetryPeriod failed to convert {token} to string", desired);
+                    _logger.LogError(LogEvents.PropertyTelemetryPeriodNotString,"Property: TelemetryPeriod failed to convert {token} to string", desired);
                 }
             }
         }
@@ -302,12 +306,12 @@ public sealed class Worker : BackgroundService
         {
             foreach (Exception exception in ex.InnerExceptions)
             {
-                _logger.LogError(LogEvents.PropertyMultipleFailure, exception, "Property change: Multiple failures");
+                _logger.LogError(LogEvents.PropertyMultipleFailure, exception, "Property: Multiple update failures");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(LogEvents.PropertySingleFailure,ex,"Property change: Failed");
+            _logger.LogError(LogEvents.PropertySingleFailure,ex,"Property: Update failed");
         }
     }
 }
