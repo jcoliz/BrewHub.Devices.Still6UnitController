@@ -12,7 +12,7 @@ public interface IRootModel
 
     public TimeSpan TelemetryPeriod { get; }
 
-    IDictionary<string,IComponentModel> Children { get; }
+    IDictionary<string,IComponentModel> Components { get; }
 
     object SetProperty(string key, object value);
 
@@ -27,7 +27,7 @@ public class StillControllerModel: IRootModel
     private const string _dtmi = "dtmi:brewhub:controller:still;1";
     public string dtmi => _dtmi;
 
-    public IDictionary<string,IComponentModel> Children { get; } = new Dictionary<string,IComponentModel>()
+    public IDictionary<string,IComponentModel> Components { get; } = new Dictionary<string,IComponentModel>()
     {
         { "Sensor_1", new SensorModel() },
         { "Sensor_2", new SensorModel() },

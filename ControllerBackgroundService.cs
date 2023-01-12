@@ -171,7 +171,7 @@ public sealed class Worker : BackgroundService
 
         int numsent = 0;
 
-        foreach(var kvp in model.Children)
+        foreach(var kvp in model.Components)
         {
             if (kvp.Value.HasTelemetry)
             {
@@ -251,10 +251,10 @@ public sealed class Worker : BackgroundService
                     fullpropname = prop.Key;
 
                     // Is this 'property' actually one of our components?
-                    if (model.Children.ContainsKey(prop.Key))
+                    if (model.Components.ContainsKey(prop.Key))
                     {
                         // In which case, we need to iterate again over the desired property's children
-                        var component = model.Children[prop.Key];
+                        var component = model.Components[prop.Key];
                         var jo = prop.Value as JObject;
                         foreach(JProperty child in jo!.Children())
                         {
