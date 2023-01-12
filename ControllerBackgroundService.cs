@@ -267,7 +267,10 @@ public sealed class Worker : BackgroundService
     { 
         new SensorModel() { Name = "Sensor_1" },
         new SensorModel() { Name = "Sensor_2" },
-        new SensorModel() { Name = "Sensor_3" }
+        new SensorModel() { Name = "Sensor_3" },
+        new ValveModel() { Name = "Valve_1" },
+        new ValveModel() { Name = "Valve_2" },
+        new ValveModel() { Name = "Valve_3" }
     };
 
     private async Task OnDesiredPropertiesUpdate(TwinCollection desiredProperties, object userContext)

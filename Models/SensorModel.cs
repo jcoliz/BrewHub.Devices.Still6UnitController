@@ -44,3 +44,24 @@ public class SensorModel: IComponent
         }
     }
 }
+
+public class ValveModel: IComponent
+{
+    public string? Name { get; set; }
+    public bool IsOpen { get; set; }
+
+    public object SetProperty(JProperty property)
+    {
+        if (property.Name == "isOpen")
+        {
+            bool desired = (bool)property.Value;
+            IsOpen = desired;
+            return IsOpen;
+        }
+        else
+        {
+            throw new ApplicationException($"{Name} has no property '{property.Name}'");
+        }
+    }
+
+}
