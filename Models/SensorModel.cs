@@ -15,6 +15,8 @@ public class SensorModel: IComponent
 {
     public string? Name { get; set; }
     public int ModbusAddress { get; set; }
+    public double TemperatureCorrection { get; set; }
+    public double HumidityCorrection { get; set; }
 
     public object SetProperty(JProperty property)
     {
@@ -23,6 +25,18 @@ public class SensorModel: IComponent
             int desired = (int)property.Value;
             ModbusAddress = desired;
             return ModbusAddress;
+        }
+        else if (property.Name == "temperatureCorrection")
+        {
+            double desired = (double)property.Value;
+            TemperatureCorrection = desired;
+            return TemperatureCorrection;
+        }
+        else if (property.Name == "humidityCorrection")
+        {
+            double desired = (double)property.Value;
+            HumidityCorrection = desired;
+            return HumidityCorrection;
         }
         else
         {

@@ -265,7 +265,9 @@ public sealed class Worker : BackgroundService
 
     private readonly IComponent[] _components = new IComponent[] 
     { 
-        new SensorModel() { Name = "Sensor_1" }
+        new SensorModel() { Name = "Sensor_1" },
+        new SensorModel() { Name = "Sensor_2" },
+        new SensorModel() { Name = "Sensor_3" }
     };
 
     private async Task OnDesiredPropertiesUpdate(TwinCollection desiredProperties, object userContext)
