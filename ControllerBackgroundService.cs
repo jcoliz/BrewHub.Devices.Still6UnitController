@@ -1,15 +1,16 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
-using System.Text;
-using System.Text.Json;
-using System.Xml;
+using BrewHub.Controller.Models;
 using Microsoft.Azure.Devices.Client;
 using Microsoft.Azure.Devices.Provisioning.Client;
 using Microsoft.Azure.Devices.Provisioning.Client.Transport;
 using Microsoft.Azure.Devices.Shared;
-using Tomlyn;
-using BrewHub.Controller.Models;
+using Newtonsoft.Json.Linq;
 using System.Net;
+using System.Text;
+using System.Text.Json;
+using System.Xml;
+using Tomlyn;
 
 namespace BrewHub.Controller;
 
@@ -262,6 +263,11 @@ public sealed class Worker : BackgroundService
     }
     private const string ContentApplicationJson = "application/json";
 
+    private readonly IComponent[] _components = new IComponent[] 
+    { 
+        new SensorModel() { Name = "Sensor_1" }
+    };
+
     private async Task OnDesiredPropertiesUpdate(TwinCollection desiredProperties, object userContext)
     {
         try
@@ -270,10 +276,30 @@ public sealed class Worker : BackgroundService
 
             foreach(KeyValuePair<string, object> prop in desiredProperties)
             {
+                // The key might be a root component property name
                 if (_desiredPropertyUpdateCallbacks.ContainsKey(prop.Key))
                 {
                     var action = _desiredPropertyUpdateCallbacks[prop.Key];
                     await action.Invoke(prop.Value,desiredProperties.Version);
+                }
+                // Or, the key might be a child component name
+                else if (_components.Where(x=>x.Name == prop.Key).Any())
+                {
+                    // In which case, we need to iterate again over the children
+                    var component = _components.Where(x=>x.Name == prop.Key).Single();
+                    var jo = prop.Value as JObject;
+                    foreach(JProperty child in jo!.Children())
+                    {
+                        if (child.Name != "__t")
+                        {
+                            // Update the property
+                            var updated = component.SetProperty(child);
+                            _logger.LogInformation(LogEvents.PropertyComponentOK,"Property: Component OK. Updated {component}.{property} to {updated}",component.Name,child.Name,updated);
+
+                            // Acknowledge the request back to hub
+                            await RespondPropertyUpdate($"{component.Name}.{child.Name}",updated,desiredProperties.Version);
+                        }
+                    }
                 }
                 else
                 {
@@ -296,7 +322,12 @@ public sealed class Worker : BackgroundService
 
     private async Task RespondPropertyUpdate(string key, object value, long version)
     {
-        var response = new Dictionary<string,PropertyChangeAck>();
+        // Key is either 'Property' or 'Component.Property'
+        var split = key.Split('.');
+        string property = split.Last();
+        string? component = split.SkipLast(1).FirstOrDefault();
+
+        var patch = new Dictionary<string,object>();
         var ack = new PropertyChangeAck() 
         {
             PropertyValue = value,
@@ -304,10 +335,22 @@ public sealed class Worker : BackgroundService
             AckVersion = version,
             AckDescription = "OK"
         };
-        response.Add(key,ack);
+        patch.Add(property,ack);
+        var response = patch;
+        
+        if (component is not null)
+        {
+            patch.Add("__t","c");
+            
+            response = new Dictionary<string,object>()
+            {
+                { component, patch }
+            };
+        }
+
         var json = JsonSerializer.Serialize(response);
-        var responsetc = new TwinCollection(json);
-        await iotClient!.UpdateReportedPropertiesAsync(responsetc);
+        var resulttc = new TwinCollection(json);
+        await iotClient!.UpdateReportedPropertiesAsync(resulttc);
 
         _logger.LogDebug(LogEvents.PropertyResponse, "Property: Responded to server with {response}",json);
     }

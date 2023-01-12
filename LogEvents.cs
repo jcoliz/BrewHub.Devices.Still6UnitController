@@ -57,4 +57,5 @@ public class LogEvents
     public const int PropertyMachineryInfoOK = 2200;
     public const int PropertyMachineryInfoResponse = 2201;
     public const int PropertyMachineryInfoParseFailure = 2281;
+    public const int PropertyComponentOK = 2300;
 }
