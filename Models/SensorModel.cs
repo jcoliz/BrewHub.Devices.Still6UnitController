@@ -21,8 +21,9 @@ public class SensorModel: IComponentModel
     public int ModbusAddress { get; set; }
     public double TemperatureCorrection { get; set; }
     public double HumidityCorrection { get; set; }
+    public bool IsActive { get; set; }
 
-    public bool HasTelemetry => ModbusAddress > 0;
+    public bool HasTelemetry => ModbusAddress > 0 && IsActive;
 
     public object SetProperty(JProperty property)
     {
@@ -67,7 +68,10 @@ public class ValveModel: IComponentModel
     public string? Name { get; set; }
     public bool IsOpen { get; set; }
 
+    public int Relay { get; set; }
+
     public bool HasTelemetry { get; } = false;
+    public bool IsActive { get; set; }
 
     public object SetProperty(JProperty property)
     {
