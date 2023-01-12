@@ -1,5 +1,6 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
+using System.Text.Json;
 using System.Xml;
 using Newtonsoft.Json.Linq;
 
@@ -9,15 +10,19 @@ public interface IRootModel
 {
     string dtmi { get; }
 
+    public TimeSpan TelemetryPeriod { get; }
+
     IDictionary<string,IComponentModel> Children { get; }
 
     object SetProperty(string key, object value);
+
+    Task<string> LoadConfigAsync();
 }
 
 public class StillControllerModel: IRootModel
 {
-    public MachineryInfo? MachineryInfo;
-    public TimeSpan TelemetryPeriod = TimeSpan.FromSeconds(30);
+    protected MachineryInfo? MachineryInfo;
+    public TimeSpan TelemetryPeriod { get; protected set; } = TimeSpan.FromSeconds(30);
 
     private const string _dtmi = "dtmi:brewhub:controller:still;1";
     public string dtmi => _dtmi;
@@ -31,6 +36,27 @@ public class StillControllerModel: IRootModel
         { "Valve_2", new ValveModel() },
         { "Valve_3", new ValveModel() },
     };
+
+    public async Task<string> LoadConfigAsync()
+    {
+        // Machinery info can OPTIONALLY be supplied via local machine config.
+        // Alternately, it can be sent down from the cloud as a desired property
+
+        var status = "No config found";
+        if (File.Exists("machineryinfo.json"))
+        {
+            using var stream = File.OpenRead("machineryinfo.json");
+            var options = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+            MachineryInfo = await JsonSerializer.DeserializeAsync<MachineryInfo>(stream,options);
+
+            if (MachineryInfo is null)
+                throw new ApplicationException("Unable to deserialize machinery info file");
+
+            status = MachineryInfo.ToString();
+        }
+
+        return status;
+    }
 
     public object SetProperty(string key, object value)
     {

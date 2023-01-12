@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using System.Xml;
+
 using Tomlyn;
 
 namespace BrewHub.Controller;
@@ -22,7 +22,7 @@ public sealed class Worker : BackgroundService
     private SecurityProviderSymmetricKey? security;
     private DeviceRegistrationResult? result;
 
-    private StillControllerModel model = new();
+    private IRootModel model = new StillControllerModel();
     
     public Worker(ILogger<Worker> logger)
     {
@@ -58,26 +58,11 @@ public sealed class Worker : BackgroundService
 
     private async Task LoadConfig()
     {
-        // Machinery info can OPTIONALLY be supplied via local machine config.
-        // Alternately, it can be sent down from the cloud as a desired property
-
         try
         {
-            if (File.Exists("machineryinfo.json"))
-            {
-                using var stream = File.OpenRead("machineryinfo.json");
-                var options = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
-                model.MachineryInfo = await JsonSerializer.DeserializeAsync<MachineryInfo>(stream,options);
+            var status = await model.LoadConfigAsync();
 
-                if (model.MachineryInfo is null)
-                    throw new ApplicationException("Unable to load machinery info file");
-            }
-            else
-            {
-                _logger.LogDebug("Config: No machineryinfo.json found. Starting unconfigured.");
-            }
-
-            _logger.LogInformation(LogEvents.ConfigOK,"Config: OK {machinery}",model.MachineryInfo);
+            _logger.LogInformation(LogEvents.ConfigOK,"Config: OK {status}",status);
         }
         catch (Exception ex)
         {
