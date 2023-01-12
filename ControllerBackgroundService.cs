@@ -22,19 +22,11 @@ public sealed class Worker : BackgroundService
     private SecurityProviderSymmetricKey? security;
     private DeviceRegistrationResult? result;
 
-    private MachineryInfo? MachineryInfo;
-    private TimeSpan TelemetryPeriod = TimeSpan.FromSeconds(30);
-
-    private const string dtmi = "dtmi:brewhub:controller:still;1";
-
-    private readonly Dictionary<string, Func<object,long,Task>> _desiredPropertyUpdateCallbacks = new();
-
+    private StillControllerModel model = new();
+    
     public Worker(ILogger<Worker> logger)
     {
         _logger = logger;
-
-        _desiredPropertyUpdateCallbacks.Add("TelemetryPeriod",UpdateTelemetryPeriodAsync);
-        _desiredPropertyUpdateCallbacks.Add("machineryInfo",UpdateMachineryInfoAsync);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -48,7 +40,7 @@ public sealed class Worker : BackgroundService
             while (!stoppingToken.IsCancellationRequested)
             {
                 await SendTelemetry();
-                await Task.Delay(TelemetryPeriod, stoppingToken);
+                await Task.Delay(model.TelemetryPeriod, stoppingToken);
             }
 
             if (iotClient is not null)
@@ -75,22 +67,17 @@ public sealed class Worker : BackgroundService
             {
                 using var stream = File.OpenRead("machineryinfo.json");
                 var options = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
-                MachineryInfo = await JsonSerializer.DeserializeAsync<MachineryInfo>(stream,options);
+                model.MachineryInfo = await JsonSerializer.DeserializeAsync<MachineryInfo>(stream,options);
 
-                if (MachineryInfo is null)
+                if (model.MachineryInfo is null)
                     throw new ApplicationException("Unable to load machinery info file");
-
-                _logger.LogDebug(LogEvents.ConfigLoaded,"Config: Loaded for {maker} {model}", 
-                    MachineryInfo?.Manufacturer ?? "(null)",
-                    MachineryInfo?.Model ?? "(null)"
-                    );
             }
             else
             {
                 _logger.LogDebug("Config: No machineryinfo.json found. Starting unconfigured.");
             }
 
-            _logger.LogInformation(LogEvents.ConfigOK,"Config: OK {machine}",MachineryInfo?.Model ?? "Empty");
+            _logger.LogInformation(LogEvents.ConfigOK,"Config: OK {machinery}",model.MachineryInfo);
         }
         catch (Exception ex)
         {
@@ -167,7 +154,7 @@ public sealed class Worker : BackgroundService
 
             var options = new ClientOptions
             {
-                ModelId = dtmi
+                ModelId = model.dtmi
             };
 
             iotClient = DeviceClient.Create(result.AssignedHub, auth, TransportType.Mqtt, options);
@@ -194,11 +181,11 @@ public sealed class Worker : BackgroundService
 
     private async Task SendTelemetry()
     {
-        if (MachineryInfo is not null && MachineryInfo?.Configuration.Sensors.Count > 0)
+        if (model.MachineryInfo is not null && model.MachineryInfo?.Configuration.Sensors.Count > 0)
         {
             // Consider each connected sensor in the configuration
             int position = 0;
-            foreach(var sensor in MachineryInfo.Configuration.Sensors)
+            foreach(var sensor in model.MachineryInfo.Configuration.Sensors)
             {
                 // Note that official PnP messages can only come from a single component at a time.
                 // This is a weakness that drives up the message count. So, will have to decide later
@@ -213,7 +200,7 @@ public sealed class Worker : BackgroundService
 
                 // Make a message out of it
                 var component = $"Sensor_{++position}";
-                using var message = CreateMessage(readings,component);
+                using var message = CreateTelemetryMessage(readings,component);
 
                 // Send the message
                 await iotClient!.SendEventAsync(message);
@@ -239,7 +226,7 @@ public sealed class Worker : BackgroundService
     /// <see href="https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#telemetry"/>.</param>
     /// <param name="encoding">The character encoding to be used when encoding the message body to bytes. This defaults to utf-8.</param>
     /// <returns>A plug and play compatible telemetry message, which can be sent to IoT Hub. The caller must dispose this object when finished.</returns>
-    public static Message CreateMessage(IDictionary<string, object> telemetryPairs, string? componentName = default, Encoding? encoding = default)
+    public static Message CreateTelemetryMessage(IDictionary<string, object> telemetryPairs, string? componentName = default, Encoding? encoding = default)
     {
         if (telemetryPairs == null)
         {
@@ -263,15 +250,6 @@ public sealed class Worker : BackgroundService
     }
     private const string ContentApplicationJson = "application/json";
 
-    private readonly IComponent[] _components = new IComponent[] 
-    { 
-        new SensorModel() { Name = "Sensor_1" },
-        new SensorModel() { Name = "Sensor_2" },
-        new SensorModel() { Name = "Sensor_3" },
-        new ValveModel() { Name = "Valve_1" },
-        new ValveModel() { Name = "Valve_2" },
-        new ValveModel() { Name = "Valve_3" }
-    };
 
     private async Task OnDesiredPropertiesUpdate(TwinCollection desiredProperties, object userContext)
     {
@@ -279,36 +257,49 @@ public sealed class Worker : BackgroundService
         {
             _logger.LogDebug(LogEvents.PropertyRequest, "Property: Desired {request}",desiredProperties.ToJson());
 
+            // Consider each kvp in the request
             foreach(KeyValuePair<string, object> prop in desiredProperties)
             {
-                // The key might be a root component property name
-                if (_desiredPropertyUpdateCallbacks.ContainsKey(prop.Key))
+                var fullpropname = "(unknown)";
+                try
                 {
-                    var action = _desiredPropertyUpdateCallbacks[prop.Key];
-                    await action.Invoke(prop.Value,desiredProperties.Version);
-                }
-                // Or, the key might be a child component name
-                else if (_components.Where(x=>x.Name == prop.Key).Any())
-                {
-                    // In which case, we need to iterate again over the children
-                    var component = _components.Where(x=>x.Name == prop.Key).Single();
-                    var jo = prop.Value as JObject;
-                    foreach(JProperty child in jo!.Children())
-                    {
-                        if (child.Name != "__t")
-                        {
-                            // Update the property
-                            var updated = component.SetProperty(child);
-                            _logger.LogInformation(LogEvents.PropertyComponentOK,"Property: Component OK. Updated {component}.{property} to {updated}",component.Name,child.Name,updated);
+                    fullpropname = prop.Key;
 
-                            // Acknowledge the request back to hub
-                            await RespondPropertyUpdate($"{component.Name}.{child.Name}",updated,desiredProperties.Version);
+                    // Is this 'property' actually one of our components?
+                    if (model.Children.ContainsKey(prop.Key))
+                    {
+                        // In which case, we need to iterate again over the desired property's children
+                        var component = model.Children[prop.Key];
+                        var jo = prop.Value as JObject;
+                        foreach(JProperty child in jo!.Children())
+                        {
+                            if (child.Name != "__t")
+                            {
+                                fullpropname = $"{prop.Key}.{child.Name}";
+
+                                // Update the property
+                                var updated = component.SetProperty(child);
+                                _logger.LogInformation(LogEvents.PropertyComponentOK,"Property: Component OK. Updated {property} to {updated}",fullpropname,updated);
+
+                                // Acknowledge the request back to hub
+                                await RespondPropertyUpdate($"{component.Name}.{child.Name}",updated,desiredProperties.Version);
+                            }
                         }
                     }
+                    // Otherwise, treat it as a property of the rool model
+                    else
+                    {
+                        // Update the property
+                        var updated = model.SetProperty(prop.Key,prop.Value);
+                        _logger.LogInformation(LogEvents.PropertyOK,"Property: OK. Updated {property} to {updated}",fullpropname,updated);
+
+                        // Acknowledge the request back to hub
+                        await RespondPropertyUpdate(prop.Key,updated,desiredProperties.Version);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    _logger.LogWarning(LogEvents.PropertyUnknown,"Property: Unknown {property}",prop.Key);
+                    _logger.LogError(LogEvents.PropertyUpdateFailure,"Property: Update failed for {property}: {type} {message}",fullpropname,ex.GetType().Name,ex.Message);
                 }
             }
         }
@@ -358,62 +349,6 @@ public sealed class Worker : BackgroundService
         await iotClient!.UpdateReportedPropertiesAsync(resulttc);
 
         _logger.LogDebug(LogEvents.PropertyResponse, "Property: Responded to server with {response}",json);
-    }
-
-    private async Task UpdateTelemetryPeriodAsync(object token, long version)
-    {
-        var jv = token as Newtonsoft.Json.Linq.JValue;
-        var desired = (string?)jv;
-        if (desired is not null)
-        {
-            try
-            {
-                // Actually update the property in memory
-                TelemetryPeriod = XmlConvert.ToTimeSpan(desired);
-                _logger.LogInformation(LogEvents.PropertyTelemetryPeriodOK,"Property: TelemetryPeriod OK. Updated to {period}",TelemetryPeriod);
-
-                // Acknowledge the request back to hub
-                await RespondPropertyUpdate("TelemetryPeriod",desired,version);
-            }
-            catch (FormatException ex)
-            {
-                _logger.LogError(LogEvents.PropertyTelemetryPeriodFormatFailure,"Property: TelemetryPeriod failed to convert {token} to timespan. {message}", desired, ex.Message);
-            }
-        }
-        else
-        {
-            _logger.LogError(LogEvents.PropertyTelemetryPeriodReadFailure,"Property: TelemetryPeriod failed to read {token}", desired);
-        }
-    }
-
-    private async Task UpdateMachineryInfoAsync(object token, long version)
-    {
-        var desired = token as Newtonsoft.Json.Linq.JObject;
-        if (desired is not null)
-        {
-            try
-            {
-                // Actually update the property in memory
-                var mi = desired.ToObject<MachineryInfo>();
-                if (mi is not null)
-                    MachineryInfo = mi;
-                else
-                    throw new FormatException("JSON parse failure");
-
-                _logger.LogInformation(LogEvents.PropertyMachineryInfoOK,"Property: MachineryInfo OK. Updated to {maker} {model}",MachineryInfo!.Manufacturer,MachineryInfo.Model);
-
-                // Acknowledge the request back to hub
-                await RespondPropertyUpdate("machineryInfo",MachineryInfo,version);
-            }
-            catch (FormatException ex)
-            {
-                _logger.LogError(LogEvents.PropertyTelemetryPeriodFormatFailure,"Property: MachineryInfo failed to convert {token} to object. {message}", desired, ex.Message);
-            }
-        }
-        else
-        {
-            _logger.LogError(LogEvents.PropertyTelemetryPeriodReadFailure,"Property: MachineryInfo failed to convert {token} to string", desired);
-        }        
     }
 
 }

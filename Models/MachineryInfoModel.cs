@@ -10,6 +10,11 @@ public class MachineryInfo
     public string? Variant { get; set; }
     public string? SerialNumber { get; set; }
     public MachineryConfiguration Configuration { get; set; } = new();
+
+    public override string ToString()
+    {
+        return $"[Machinery Info] {Manufacturer??"null"} {Model??"null"}";
+    }
 }
 
 public class MachineryConfiguration

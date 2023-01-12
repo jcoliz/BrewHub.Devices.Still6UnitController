@@ -4,14 +4,14 @@ using Newtonsoft.Json.Linq;
 
 namespace BrewHub.Controller.Models;
 
-public interface IComponent
+public interface IComponentModel
 {
     string? Name { get; }
 
     object SetProperty(JProperty property);
 }
 
-public class SensorModel: IComponent
+public class SensorModel: IComponentModel
 {
     public string? Name { get; set; }
     public int ModbusAddress { get; set; }
@@ -45,7 +45,7 @@ public class SensorModel: IComponent
     }
 }
 
-public class ValveModel: IComponent
+public class ValveModel: IComponentModel
 {
     public string? Name { get; set; }
     public bool IsOpen { get; set; }

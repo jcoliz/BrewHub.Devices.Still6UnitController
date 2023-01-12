@@ -45,10 +45,12 @@ public class LogEvents
     public const int Command2Error     = 1280;
 
     // 20. Properties
+    public const int PropertyOK         = 2000;
     public const int PropertyRequest = 2001;
     public const int PropertyResponse = 2002;
-    public const int PropertySingleFailure = 2081;
     public const int PropertyUnknown   = 2071;
+    public const int PropertyUpdateFailure = 2081;
+    public const int PropertySingleFailure = 2081;
     public const int PropertyMultipleFailure = 2082;
     public const int PropertyTelemetryPeriodOK = 2100;
     public const int PropertyTelemetryPeriodResponse = 2101; 
