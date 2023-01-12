@@ -282,7 +282,7 @@ public sealed class Worker : BackgroundService
                                 _logger.LogInformation(LogEvents.PropertyComponentOK,"Property: Component OK. Updated {property} to {updated}",fullpropname,updated);
 
                                 // Acknowledge the request back to hub
-                                await RespondPropertyUpdate($"{component.Name}.{child.Name}",updated,desiredProperties.Version);
+                                await RespondPropertyUpdate(fullpropname,updated,desiredProperties.Version);
                             }
                         }
                     }
@@ -294,12 +294,12 @@ public sealed class Worker : BackgroundService
                         _logger.LogInformation(LogEvents.PropertyOK,"Property: OK. Updated {property} to {updated}",fullpropname,updated);
 
                         // Acknowledge the request back to hub
-                        await RespondPropertyUpdate(prop.Key,updated,desiredProperties.Version);
+                        await RespondPropertyUpdate(fullpropname,updated,desiredProperties.Version);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(LogEvents.PropertyUpdateFailure,"Property: Update failed for {property}: {type} {message}",fullpropname,ex.GetType().Name,ex.Message);
+                    _logger.LogError(LogEvents.PropertyUpdateFailure,ex,"Property: Update failed for {property}",fullpropname);
                 }
             }
         }
