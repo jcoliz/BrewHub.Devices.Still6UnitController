@@ -181,39 +181,39 @@ public sealed class Worker : BackgroundService
 
     private async Task SendTelemetry()
     {
-        if (model.MachineryInfo is not null && model.MachineryInfo?.Configuration.Sensors.Count > 0)
+        // In the current model, the root component doesn't send any telemetry. Would need
+        // some updating here if that changes
+
+        int numsent = 0;
+
+        foreach(var kvp in model.Children)
         {
-            // Consider each connected sensor in the configuration
-            int position = 0;
-            foreach(var sensor in model.MachineryInfo.Configuration.Sensors)
+            if (kvp.Value.HasTelemetry)
             {
                 // Note that official PnP messages can only come from a single component at a time.
                 // This is a weakness that drives up the message count. So, will have to decide later
                 // if it's worth keeping this, or scrapping PnP compatibility and collecting them all
                 // into a single message.
 
-                // Take the reading for that sensor
-                Dictionary<string,object> readings = new();
-                var fakereading = DateTime.Now.Minute + sensor.Value * 10;
-                readings["temperature"] = fakereading;
-                readings["humidity"] = 100 - fakereading;
+                // Obtain readings from this component
+                var readings = kvp.Value.GetTelemetry();
 
                 // Make a message out of it
-                var component = $"Sensor_{++position}";
-                using var message = CreateTelemetryMessage(readings,component);
+                using var message = CreateTelemetryMessage(readings,kvp.Key);
 
                 // Send the message
                 await iotClient!.SendEventAsync(message);
                 var detailslist = readings.Select(x=>$"{x.Key}={x.Value:F1}");
                 var details = string.Join(' ',detailslist);
-                _logger.LogDebug(LogEvents.TelemetrySentOne,"Telemetry: {component} ({name}) {details}", component, sensor.Key, details);
+                _logger.LogDebug(LogEvents.TelemetrySentOne,"Telemetry: {component} {details}", kvp.Key, details);
+                ++numsent;
             }
-            _logger.LogInformation(LogEvents.TelemetryOK,"Telemetry: OK {count} messages",position);            
         }
+
+        if (numsent > 0)
+            _logger.LogInformation(LogEvents.TelemetryOK,"Telemetry: OK {count} messages",numsent);            
         else
-        {
-            _logger.LogWarning(LogEvents.TelemetryNoMachinery,"Telemetry: No machinery info found. Nothing sent");
-        }
+            _logger.LogWarning(LogEvents.TelemetryNotSent,"Telemetry: No components had available readings. Nothing sent");
     }
 
     // Below is from https://github.com/Azure/azure-iot-sdk-csharp/blob/1e97d800061aca1ab812ea32d47bac2442c1ed26/iothub/device/samples/solutions/PnpDeviceSamples/PnpConvention/PnpConvention.cs#L40

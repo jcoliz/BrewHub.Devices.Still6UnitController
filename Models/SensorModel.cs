@@ -8,7 +8,11 @@ public interface IComponentModel
 {
     string? Name { get; }
 
+    bool HasTelemetry { get; }
+
     object SetProperty(JProperty property);
+
+    IDictionary<string,object> GetTelemetry();
 }
 
 public class SensorModel: IComponentModel
@@ -17,6 +21,8 @@ public class SensorModel: IComponentModel
     public int ModbusAddress { get; set; }
     public double TemperatureCorrection { get; set; }
     public double HumidityCorrection { get; set; }
+
+    public bool HasTelemetry => ModbusAddress > 0;
 
     public object SetProperty(JProperty property)
     {
@@ -43,12 +49,25 @@ public class SensorModel: IComponentModel
             throw new ApplicationException($"{Name} has no property '{property.Name}'");
         }
     }
+
+    public IDictionary<string,object> GetTelemetry()
+    {
+        var readings = new Dictionary<string,object>();
+
+        var fakereading = DateTime.Now.Minute + ModbusAddress * 10;
+        readings["temperature"] = fakereading;
+        readings["humidity"] = 100 - fakereading;
+
+        return readings;
+    }    
 }
 
 public class ValveModel: IComponentModel
 {
     public string? Name { get; set; }
     public bool IsOpen { get; set; }
+
+    public bool HasTelemetry { get; } = false;
 
     public object SetProperty(JProperty property)
     {
@@ -63,5 +82,7 @@ public class ValveModel: IComponentModel
             throw new ApplicationException($"{Name} has no property '{property.Name}'");
         }
     }
+
+    public IDictionary<string,object> GetTelemetry() => throw new NotImplementedException();
 
 }
