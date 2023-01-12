@@ -46,7 +46,9 @@ public class LogEvents
 
     // 20. Properties
     public const int PropertyRequest = 2001;
+    public const int PropertyResponse = 2002;
     public const int PropertySingleFailure = 2081;
+    public const int PropertyUnknown   = 2071;
     public const int PropertyMultipleFailure = 2082;
     public const int PropertyTelemetryPeriodOK = 2100;
     public const int PropertyTelemetryPeriodResponse = 2101; 

@@ -26,9 +26,14 @@ public sealed class Worker : BackgroundService
 
     private const string dtmi = "dtmi:brewhub:controller:still;1";
 
+    private readonly Dictionary<string, Func<object,long,Task>> _desiredPropertyUpdateCallbacks = new();
+
     public Worker(ILogger<Worker> logger)
     {
         _logger = logger;
+
+        _desiredPropertyUpdateCallbacks.Add("TelemetryPeriod",UpdateTelemetryPeriodAsync);
+        _desiredPropertyUpdateCallbacks.Add("machineryInfo",UpdateMachineryInfoAsync);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -263,87 +268,16 @@ public sealed class Worker : BackgroundService
         {
             _logger.LogDebug(LogEvents.PropertyRequest, "Property: Desired {request}",desiredProperties.ToJson());
 
-            if (desiredProperties.Contains("TelemetryPeriod"))
+            foreach(KeyValuePair<string, object> prop in desiredProperties)
             {
-                var token = desiredProperties["TelemetryPeriod"];
-                var desired = (string)token;
-
-                if (desired is not null)
+                if (_desiredPropertyUpdateCallbacks.ContainsKey(prop.Key))
                 {
-                    try
-                    {
-                        // Actually update the property in memory
-                        TelemetryPeriod = XmlConvert.ToTimeSpan(desired);
-                        _logger.LogInformation(LogEvents.PropertyTelemetryPeriodOK,"Property: TelemetryPeriod OK. Updated to {period}",TelemetryPeriod);
-
-                        // Acknowledge the request back to hub
-                        var response = new Dictionary<string,PropertyChangeAck>();
-                        var ack = new PropertyChangeAck() 
-                        {
-                            PropertyValue = desired,
-                            AckCode = HttpStatusCode.OK,
-                            AckVersion = desiredProperties.Version,
-                            AckDescription = "OK"
-                        };
-                        response.Add("TelemetryPeriod",ack);
-                        var json = JsonSerializer.Serialize(response);
-                        var responsetc = new TwinCollection(json);
-                        await iotClient!.UpdateReportedPropertiesAsync(responsetc);
-
-                        _logger.LogDebug(LogEvents.PropertyTelemetryPeriodResponse, "Property: TelemetryPeriod responded to server with {response}",json);
-                    }
-                    catch (FormatException ex)
-                    {
-                        _logger.LogError(LogEvents.PropertyTelemetryPeriodFormatFailure,"Property: TelemetryPeriod failed to convert {token} to timespan. {message}", desired, ex.Message);
-                    }
+                    var action = _desiredPropertyUpdateCallbacks[prop.Key];
+                    await action.Invoke(prop.Value,desiredProperties.Version);
                 }
                 else
                 {
-                    _logger.LogError(LogEvents.PropertyTelemetryPeriodReadFailure,"Property: TelemetryPeriod failed to read {token}", desired);
-                }
-            }
-            
-            if (desiredProperties.Contains("machineryInfo"))
-            {
-                var token = desiredProperties["machineryInfo"];
-                var desired = token as Newtonsoft.Json.Linq.JObject;
-
-                if (desired is not null)
-                {
-                    try
-                    {
-                        // Actually update the property in memory
-
-                        MachineryInfo = desired.ToObject<MachineryInfo>();
-                        if (MachineryInfo is null)
-                            throw new FormatException("JSON parse failure");
-    
-                        _logger.LogInformation(LogEvents.PropertyMachineryInfoOK,"Property: MachineryInfo OK. Updated to {maker} {model}",MachineryInfo!.Manufacturer,MachineryInfo.Model);
-
-                        // Acknowledge the request back to hub
-                        var response = new Dictionary<string,PropertyChangeAck>();
-                        var ack = new PropertyChangeAck() 
-                        {
-                            PropertyValue = MachineryInfo,
-                            AckCode = HttpStatusCode.OK,
-                            AckVersion = desiredProperties.Version,
-                            AckDescription = "OK"
-                        };
-                        response.Add("machineryInfo",ack);
-                        var json = JsonSerializer.Serialize(response);
-                        var responsetc = new TwinCollection(json);
-                        await iotClient!.UpdateReportedPropertiesAsync(responsetc);
-
-                        _logger.LogDebug(LogEvents.PropertyTelemetryPeriodResponse, "Property: MachineryInfo responded to server with {response}",json);
-                    }
-                    catch (FormatException ex)
-                    {
-                        _logger.LogError(LogEvents.PropertyTelemetryPeriodFormatFailure,"Property: MachineryInfo failed to convert {token} to timespan. {message}", desired, ex.Message);
-                    }
-                }
-                else
-                {
-                    _logger.LogError(LogEvents.PropertyTelemetryPeriodReadFailure,"Property: MachineryInfo failed to convert {token} to string", desired);
+                    _logger.LogWarning(LogEvents.PropertyUnknown,"Property: Unknown {property}",prop.Key);
                 }
             }
         }
@@ -359,4 +293,79 @@ public sealed class Worker : BackgroundService
             _logger.LogError(LogEvents.PropertySingleFailure,ex,"Property: Update failed");
         }
     }
+
+    private async Task RespondPropertyUpdate(string key, object value, long version)
+    {
+        var response = new Dictionary<string,PropertyChangeAck>();
+        var ack = new PropertyChangeAck() 
+        {
+            PropertyValue = value,
+            AckCode = HttpStatusCode.OK,
+            AckVersion = version,
+            AckDescription = "OK"
+        };
+        response.Add(key,ack);
+        var json = JsonSerializer.Serialize(response);
+        var responsetc = new TwinCollection(json);
+        await iotClient!.UpdateReportedPropertiesAsync(responsetc);
+
+        _logger.LogDebug(LogEvents.PropertyResponse, "Property: Responded to server with {response}",json);
+    }
+
+    private async Task UpdateTelemetryPeriodAsync(object token, long version)
+    {
+        var jv = token as Newtonsoft.Json.Linq.JValue;
+        var desired = (string?)jv;
+        if (desired is not null)
+        {
+            try
+            {
+                // Actually update the property in memory
+                TelemetryPeriod = XmlConvert.ToTimeSpan(desired);
+                _logger.LogInformation(LogEvents.PropertyTelemetryPeriodOK,"Property: TelemetryPeriod OK. Updated to {period}",TelemetryPeriod);
+
+                // Acknowledge the request back to hub
+                await RespondPropertyUpdate("TelemetryPeriod",desired,version);
+            }
+            catch (FormatException ex)
+            {
+                _logger.LogError(LogEvents.PropertyTelemetryPeriodFormatFailure,"Property: TelemetryPeriod failed to convert {token} to timespan. {message}", desired, ex.Message);
+            }
+        }
+        else
+        {
+            _logger.LogError(LogEvents.PropertyTelemetryPeriodReadFailure,"Property: TelemetryPeriod failed to read {token}", desired);
+        }
+    }
+
+    private async Task UpdateMachineryInfoAsync(object token, long version)
+    {
+        var desired = token as Newtonsoft.Json.Linq.JObject;
+        if (desired is not null)
+        {
+            try
+            {
+                // Actually update the property in memory
+                var mi = desired.ToObject<MachineryInfo>();
+                if (mi is not null)
+                    MachineryInfo = mi;
+                else
+                    throw new FormatException("JSON parse failure");
+
+                _logger.LogInformation(LogEvents.PropertyMachineryInfoOK,"Property: MachineryInfo OK. Updated to {maker} {model}",MachineryInfo!.Manufacturer,MachineryInfo.Model);
+
+                // Acknowledge the request back to hub
+                await RespondPropertyUpdate("machineryInfo",MachineryInfo,version);
+            }
+            catch (FormatException ex)
+            {
+                _logger.LogError(LogEvents.PropertyTelemetryPeriodFormatFailure,"Property: MachineryInfo failed to convert {token} to object. {message}", desired, ex.Message);
+            }
+        }
+        else
+        {
+            _logger.LogError(LogEvents.PropertyTelemetryPeriodReadFailure,"Property: MachineryInfo failed to convert {token} to string", desired);
+        }        
+    }
+
 }
