@@ -35,6 +35,8 @@ public sealed class IoTHubWorker : BackgroundService
         try
         {
             _logger.LogInformation(LogEvents.ExecuteStartOK,"IoTHub Device Worker: Started OK");
+            var device = model.DeviceInfo;
+            _logger.LogInformation(LogEvents.ExecuteDeviceInfo,"Device: {mfr} {model} {version}", device.Manufacturer, device.DeviceModel, device.SoftwareVersion);
             await LoadConfig();
             await ProvisionDevice();
             await OpenConnection();
@@ -354,7 +356,6 @@ public sealed class IoTHubWorker : BackgroundService
         var resulttc = new TwinCollection(json);
         await iotClient!.UpdateReportedPropertiesAsync(resulttc);
 
-        _logger.LogDebug("Property: Updated reported properties as {update}",json);
-
+        _logger.LogDebug(LogEvents.PropertySendActuals,"Property: Updated reported properties as {update}",json);
     }
 }

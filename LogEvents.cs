@@ -12,7 +12,8 @@ public class LogEvents
 
     // 1. Execute
     public const int ExecuteStartOK     = 100;
-    public const int ExecuteFinished    = 101;
+    public const int ExecuteDeviceInfo  = 101;
+    public const int ExecuteFinished    = 110;
     public const int ExecuteFailed      = 190;
 
     // 2. Config
@@ -48,16 +49,9 @@ public class LogEvents
     public const int PropertyOK         = 2000;
     public const int PropertyRequest = 2001;
     public const int PropertyResponse = 2002;
-    public const int PropertyUnknown   = 2071;
+    public const int PropertySendActuals = 2003;
     public const int PropertyUpdateFailure = 2081;
     public const int PropertySingleFailure = 2081;
     public const int PropertyMultipleFailure = 2082;
-    public const int PropertyTelemetryPeriodOK = 2100;
-    public const int PropertyTelemetryPeriodResponse = 2101; 
-    public const int PropertyTelemetryPeriodReadFailure = 2181;
-    public const int PropertyTelemetryPeriodFormatFailure = 2182;
-    public const int PropertyMachineryInfoOK = 2200;
-    public const int PropertyMachineryInfoResponse = 2201;
-    public const int PropertyMachineryInfoParseFailure = 2281;
     public const int PropertyComponentOK = 2300;
 }

@@ -18,6 +18,8 @@ public interface IRootModel
 
     Task<string> LoadConfigAsync();
 
+    public DeviceInformationModel DeviceInfo { get; }
+
 }
 
 public class StillControllerModel: IRootModel
@@ -27,6 +29,8 @@ public class StillControllerModel: IRootModel
 
     private const string _dtmi = "dtmi:brewhub:controller:still;1";
     public string dtmi => _dtmi;
+
+    public DeviceInformationModel DeviceInfo => new DeviceInformationModel();
 
     public IDictionary<string,IComponentModel> Components { get; } = new Dictionary<string,IComponentModel>()
     {
