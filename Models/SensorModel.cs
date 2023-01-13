@@ -6,15 +6,18 @@ namespace BrewHub.Controller.Models;
 
 public interface IComponentModel
 {
+    string dtmi { get; }
+
     bool HasTelemetry { get; }
 
-    object SetProperty(JProperty property);
+    object SetProperty(string key, object value);
 
     IDictionary<string,object> GetTelemetry();
 }
 
 public class SensorModel: IComponentModel
 {
+    public string dtmi => "dtmi:brewhub:logical:xy_02;1";
     public string? Target { get; set; }
     public int LogicalAddress { get; set; }
     public int PhysicalAddress { get; private set; }
@@ -25,48 +28,44 @@ public class SensorModel: IComponentModel
 
     public bool HasTelemetry => LogicalAddress > 0 && IsActive;
 
-    public object SetProperty(JProperty property)
+    public object SetProperty(string key, object value)
     {
-        if (property.Name == "LogicalAddress")
+        if (key == "LogicalAddress")
         {
-            int desired = (int)property.Value;
+            int desired = (int)(JValue)value;
             LogicalAddress = desired;
             return LogicalAddress;
         }
-        else if (property.Name == "temperatureCorrection")
+        else if (key == "temperatureCorrection")
         {
-            double desired = (double)property.Value;
+            double desired = (double)(JValue)value;
             TemperatureCorrection = desired;
             return TemperatureCorrection;
         }
-        else if (property.Name == "humidityCorrection")
+        else if (key == "humidityCorrection")
         {
-            double desired = (double)property.Value;
+            double desired = (double)(JValue)value;
             HumidityCorrection = desired;
             return HumidityCorrection;
         }
-        else if (property.Name == "IsActive")
+        else if (key == "IsActive")
         {
-            bool desired = (bool)property.Value;
+            bool desired = (bool)(JValue)value;
             IsActive = desired;
             return IsActive;
         }
-        else if (property.Name == "Target")
+        else if (key == "Target")
         {
-            var desired = property.Value as Newtonsoft.Json.Linq.JValue;
-            if (desired is null)
-                throw new ApplicationException($"Failed to extract value from {property.Value}");
-
-            var newval = (string?)desired;
+            var newval = (string?)(JValue)value;
             if (newval is null)
-                throw new FormatException($"Failed to extract string from {property.Value}");
+                throw new FormatException($"Failed to extract string from {value}");
 
             Target = newval;
             return Target;
         }
         else
         {
-            throw new ApplicationException($"{this} has no property '{property.Name}'");
+            throw new ApplicationException($"{this} has no property '{value}'");
         }
     }
 
@@ -89,6 +88,7 @@ public class SensorModel: IComponentModel
 
 public class ValveModel: IComponentModel
 {
+    public string dtmi => "dtmi:brewhub:logical:valve;1";
     public string? Target { get; set; }
     public bool IsActive { get; set; }
     public bool IsOpen { get; set; }
@@ -97,42 +97,38 @@ public class ValveModel: IComponentModel
 
     public bool HasTelemetry { get; } = false;
 
-    public object SetProperty(JProperty property)
+    public object SetProperty(string key, object value)
     {
-        if (property.Name == "Relay")
+        if (key == "Relay")
         {
-            int desired = (int)property.Value;
+            int desired = (int)(JValue)value;
             Relay = desired;
             return Relay;
         }
-        else if (property.Name == "isOpen")
+        else if (key == "isOpen")
         {
-            bool desired = (bool)property.Value;
+            bool desired = (bool)(JValue)value;
             IsOpen = desired;
             return IsOpen;
         }
-        else if (property.Name == "IsActive")
+        else if (key == "IsActive")
         {
-            bool desired = (bool)property.Value;
+            bool desired = (bool)(JValue)value;
             IsActive = desired;
             return IsActive;
         }
-        else if (property.Name == "Target")
+        else if (key == "Target")
         {
-            var desired = property.Value as Newtonsoft.Json.Linq.JValue;
-            if (desired is null)
-                throw new ApplicationException($"Failed to extract value from {property.Value}");
-
-            var newval = (string?)desired;
+            var newval = (string?)(JValue)value;
             if (newval is null)
-                throw new FormatException($"Failed to extract string from {property.Value}");
+                throw new FormatException($"Failed to extract string from {value}");
 
             Target = newval;
             return Target;
         }
         else
         {
-            throw new ApplicationException($"{this} has no property '{property.Name}'");
+            throw new ApplicationException($"{this} has no property '{key}'");
         }
     }
 

@@ -6,20 +6,15 @@ using Newtonsoft.Json.Linq;
 
 namespace BrewHub.Controller.Models;
 
-public interface IRootModel
+public interface IRootModel: IComponentModel
 {
-    string dtmi { get; }
-
     public TimeSpan TelemetryPeriod { get; }
-
-    IDictionary<string,IComponentModel> Components { get; }
-
-    object SetProperty(string key, object value);
-
-    Task<string> LoadConfigAsync();
 
     public DeviceInformationModel DeviceInfo { get; }
 
+    IDictionary<string,IComponentModel> Components { get; }
+
+    Task<string> LoadConfigAsync();
 }
 
 public class StillControllerModel: IRootModel
@@ -27,10 +22,11 @@ public class StillControllerModel: IRootModel
     protected MachineryInfo? MachineryInfo;
     public TimeSpan TelemetryPeriod { get; protected set; } = TimeSpan.FromSeconds(30);
 
-    private const string _dtmi = "dtmi:brewhub:controller:still;1";
-    public string dtmi => _dtmi;
+    public string dtmi => "dtmi:brewhub:controller:still;1";
 
     public DeviceInformationModel DeviceInfo => new DeviceInformationModel();
+
+    public bool HasTelemetry => false;
 
     public IDictionary<string,IComponentModel> Components { get; } = new Dictionary<string,IComponentModel>()
     {
@@ -106,5 +102,6 @@ public class StillControllerModel: IRootModel
 
         return result!;
     }
- 
+
+    IDictionary<string,object> IComponentModel.GetTelemetry() => throw new NotImplementedException(); 
 }
