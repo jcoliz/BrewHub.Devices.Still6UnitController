@@ -190,7 +190,7 @@ public sealed class Worker : BackgroundService
                 await iotClient!.SendEventAsync(message);
                 var detailslist = readings.Select(x=>$"{x.Key}={x.Value:F1}");
                 var details = string.Join(' ',detailslist);
-                _logger.LogDebug(LogEvents.TelemetrySentOne,"Telemetry: {component} {details}", kvp.Key, details);
+                _logger.LogDebug(LogEvents.TelemetrySentOne,"Telemetry: {component} {id} {details}", kvp.Key, kvp.Value, details);
                 ++numsent;
             }
         }

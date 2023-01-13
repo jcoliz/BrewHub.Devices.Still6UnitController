@@ -53,8 +53,6 @@ public class StillControllerModel: IRootModel
                 throw new ApplicationException("Unable to deserialize machinery info file");
 
             status = MachineryInfo.ToString();
-
-            ApplyMachineryInfo();
         }
 
         return status;
@@ -71,7 +69,6 @@ public class StillControllerModel: IRootModel
                 MachineryInfo = new MachineryInfo();
                 result = MachineryInfo;
 
-                ApplyMachineryInfo();
                 return result;
             }
 
@@ -85,8 +82,6 @@ public class StillControllerModel: IRootModel
 
             MachineryInfo = newval;
             result = MachineryInfo;
-
-            ApplyMachineryInfo();
         }
         else if (key == "TelemetryPeriod")
         {
@@ -107,38 +102,4 @@ public class StillControllerModel: IRootModel
         return result!;
     }
  
-    protected void ApplyMachineryInfo()
-    {
-        // When a new Machinery Info is set, call this to apply it to the components below.
-
-        var sensors = Components.Select(x=>x.Value).Where(x=> x is SensorModel).ToArray();
-        int i = 0;
-        foreach(var kvp in MachineryInfo.Configuration.Sensors)
-        {
-            var sensor = sensors[i] as SensorModel;
-
-            sensor!.IsActive = true;
-            sensor.ModbusAddress = kvp.Value;
-            sensor.Name = kvp.Key;
-
-            ++i;
-        }
-        while(i < sensors.Length)
-            (sensors[i++] as SensorModel)!.IsActive = false;
-
-        var valves = Components.Select(x=>x.Value).Where(x=> x is ValveModel).ToArray();
-        i = 0;
-        foreach(var kvp in MachineryInfo.Configuration.Valves)
-        {
-            var valve = valves[i] as ValveModel;
-
-            valve!.IsActive = true;
-            valve.Relay = kvp.Value;
-            valve.Name = kvp.Key;
-
-            ++i;
-        }
-        while(i < valves.Length)
-            (valves[i++] as ValveModel)!.IsActive = false;
-    }
 }

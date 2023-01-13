@@ -6,8 +6,6 @@ namespace BrewHub.Controller.Models;
 
 public interface IComponentModel
 {
-    string? Name { get; }
-
     bool HasTelemetry { get; }
 
     object SetProperty(JProperty property);
@@ -17,21 +15,23 @@ public interface IComponentModel
 
 public class SensorModel: IComponentModel
 {
-    public string? Name { get; set; }
-    public int ModbusAddress { get; set; }
+    public string? Target { get; set; }
+    public int LogicalAddress { get; set; }
+    public int PhysicalAddress { get; private set; }
     public double TemperatureCorrection { get; set; }
     public double HumidityCorrection { get; set; }
     public bool IsActive { get; set; }
+    public bool IsConnected { get; private set; }
 
-    public bool HasTelemetry => ModbusAddress > 0 && IsActive;
+    public bool HasTelemetry => LogicalAddress > 0 && IsActive;
 
     public object SetProperty(JProperty property)
     {
-        if (property.Name == "modbusAddress")
+        if (property.Name == "LogicalAddress")
         {
             int desired = (int)property.Value;
-            ModbusAddress = desired;
-            return ModbusAddress;
+            LogicalAddress = desired;
+            return LogicalAddress;
         }
         else if (property.Name == "temperatureCorrection")
         {
@@ -45,9 +45,28 @@ public class SensorModel: IComponentModel
             HumidityCorrection = desired;
             return HumidityCorrection;
         }
+        else if (property.Name == "IsActive")
+        {
+            bool desired = (bool)property.Value;
+            IsActive = desired;
+            return IsActive;
+        }
+        else if (property.Name == "Target")
+        {
+            var desired = property.Value as Newtonsoft.Json.Linq.JValue;
+            if (desired is null)
+                throw new ApplicationException($"Failed to extract value from {property.Value}");
+
+            var newval = (string?)desired;
+            if (newval is null)
+                throw new FormatException($"Failed to extract string from {property.Value}");
+
+            Target = newval;
+            return Target;
+        }
         else
         {
-            throw new ApplicationException($"{Name} has no property '{property.Name}'");
+            throw new ApplicationException($"{Target ?? "Component"} has no property '{property.Name}'");
         }
     }
 
@@ -55,12 +74,17 @@ public class SensorModel: IComponentModel
     {
         var readings = new Dictionary<string,object>();
 
-        var fakereading = DateTime.Now.Minute + ModbusAddress * 10;
-        readings["temperature"] = fakereading;
-        readings["humidity"] = 100 - fakereading;
+        var fakereading = DateTime.Now.Minute + LogicalAddress * 10;
+        readings["temperature"] = fakereading + TemperatureCorrection;
+        readings["humidity"] = 100 - fakereading + HumidityCorrection;
 
         return readings;
-    }    
+    }
+
+    public override string ToString()
+    {
+        return $"{(Target ?? "Component")}@{LogicalAddress}";
+    }
 }
 
 public class ValveModel: IComponentModel
