@@ -1,5 +1,6 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
+using BrewHub.Controller;
 using BrewHub.Controller.Models;
 using Microsoft.Azure.Devices.Client;
 using Microsoft.Azure.Devices.Provisioning.Client;
@@ -12,28 +13,28 @@ using System.Text.Json;
 
 using Tomlyn;
 
-namespace BrewHub.Controller;
+namespace BrewHub;
 
-public sealed class Worker : BackgroundService
+public sealed class IoTHubWorker : BackgroundService
 {
-    private readonly ILogger<Worker> _logger;
+    private readonly IRootModel model;
+    private readonly ILogger<IoTHubWorker> _logger;
 
     private DeviceClient? iotClient;
     private SecurityProviderSymmetricKey? security;
     private DeviceRegistrationResult? result;
-
-    private IRootModel model = new StillControllerModel();
     
-    public Worker(ILogger<Worker> logger)
+    public IoTHubWorker(ILogger<IoTHubWorker> logger, IRootModel inmodel)
     {
         _logger = logger;
+        model = inmodel;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
-            _logger.LogInformation(LogEvents.ExecuteStartOK,"BrewHub Controller Service: Started OK");
+            _logger.LogInformation(LogEvents.ExecuteStartOK,"IoTHub Device Worker: Started OK");
             await LoadConfig();
             await ProvisionDevice();
             await OpenConnection();
@@ -48,11 +49,11 @@ public sealed class Worker : BackgroundService
         }
         catch (TaskCanceledException)
         {
-            _logger.LogInformation(LogEvents.ExecuteFinished,"BrewHub Controller Service: Stopped");
+            _logger.LogInformation(LogEvents.ExecuteFinished,"IoTHub Device Worker: Stopped");
         }
         catch (Exception ex)
         {
-            _logger.LogCritical(LogEvents.ExecuteFailed,"BrewHub Controller Service: Failed {type} {message}", ex.GetType().Name, ex.Message);
+            _logger.LogCritical(LogEvents.ExecuteFailed,"IoTHub Device Worker: Failed {type} {message}", ex.GetType().Name, ex.Message);
         }
     }
 
@@ -335,5 +336,4 @@ public sealed class Worker : BackgroundService
 
         _logger.LogDebug(LogEvents.PropertyResponse, "Property: Responded to server with {response}",json);
     }
-
 }

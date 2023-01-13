@@ -17,6 +17,7 @@ public interface IRootModel
     object SetProperty(string key, object value);
 
     Task<string> LoadConfigAsync();
+
 }
 
 public class StillControllerModel: IRootModel
