@@ -66,7 +66,7 @@ public class SensorModel: IComponentModel
         }
         else
         {
-            throw new ApplicationException($"{Target ?? "Component"} has no property '{property.Name}'");
+            throw new ApplicationException($"{this} has no property '{property.Name}'");
         }
     }
 
@@ -89,26 +89,56 @@ public class SensorModel: IComponentModel
 
 public class ValveModel: IComponentModel
 {
-    public string? Name { get; set; }
+    public string? Target { get; set; }
+    public bool IsActive { get; set; }
     public bool IsOpen { get; set; }
 
     public int Relay { get; set; }
 
     public bool HasTelemetry { get; } = false;
-    public bool IsActive { get; set; }
 
     public object SetProperty(JProperty property)
     {
-        if (property.Name == "isOpen")
+        if (property.Name == "Relay")
+        {
+            int desired = (int)property.Value;
+            Relay = desired;
+            return Relay;
+        }
+        else if (property.Name == "isOpen")
         {
             bool desired = (bool)property.Value;
             IsOpen = desired;
             return IsOpen;
         }
+        else if (property.Name == "IsActive")
+        {
+            bool desired = (bool)property.Value;
+            IsActive = desired;
+            return IsActive;
+        }
+        else if (property.Name == "Target")
+        {
+            var desired = property.Value as Newtonsoft.Json.Linq.JValue;
+            if (desired is null)
+                throw new ApplicationException($"Failed to extract value from {property.Value}");
+
+            var newval = (string?)desired;
+            if (newval is null)
+                throw new FormatException($"Failed to extract string from {property.Value}");
+
+            Target = newval;
+            return Target;
+        }
         else
         {
-            throw new ApplicationException($"{Name} has no property '{property.Name}'");
+            throw new ApplicationException($"{this} has no property '{property.Name}'");
         }
+    }
+
+    public override string ToString()
+    {
+        return $"{(Target ?? "Component")}@{Relay}";
     }
 
     public IDictionary<string,object> GetTelemetry() => throw new NotImplementedException();
