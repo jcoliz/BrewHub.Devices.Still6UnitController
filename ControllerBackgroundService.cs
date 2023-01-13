@@ -146,6 +146,9 @@ public sealed class IoTHubWorker : BackgroundService
             iotClient = DeviceClient.Create(result.AssignedHub, auth, TransportType.Mqtt, options);
             _logger.LogInformation(LogEvents.ConnectOK,"Connection: OK. {info}", iotClient.ProductInfo);
 
+            // Update the current state of actual properties
+            await UpdateReportedProperties();
+
             // Read the current state of desired properties and set the local values as desired
             var twin = await iotClient.GetTwinAsync().ConfigureAwait(false);
             await OnDesiredPropertiesUpdate(twin.Properties.Desired, this);
@@ -335,5 +338,23 @@ public sealed class IoTHubWorker : BackgroundService
         await iotClient!.UpdateReportedPropertiesAsync(resulttc);
 
         _logger.LogDebug(LogEvents.PropertyResponse, "Property: Responded to server with {response}",json);
+    }
+
+    // Single update of all reported properties at once
+    private async Task UpdateReportedProperties()
+    {
+        // For NOW, I am just going to update the "Info" component
+        var info = new DeviceInformationModel();
+        var update = new Dictionary<string,object>()
+        {
+            { "Info", info }
+        };
+
+        var json = JsonSerializer.Serialize(update);
+        var resulttc = new TwinCollection(json);
+        await iotClient!.UpdateReportedPropertiesAsync(resulttc);
+
+        _logger.LogDebug("Property: Updated reported properties as {update}",json);
+
     }
 }

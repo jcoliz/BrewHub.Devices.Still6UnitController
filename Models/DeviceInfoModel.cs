@@ -1,19 +1,32 @@
 using System.Runtime.InteropServices;
 
 namespace BrewHub.Controller.Models;
+using System.Text.Json.Serialization;
 
 public class DeviceInformationModel
 {
     // Manufacturer of the device THIS CODE is running on
+
+    [JsonPropertyName("__t")]
+    public string ComponentID => "c";
+
+    [JsonPropertyName("manufacturer")]
     public string Manufacturer => "BrewHub";
+
+    [JsonPropertyName("model")]
     public string? DeviceModel => "Digital Distillery Controller DC-01";
+
+    [JsonPropertyName("swVersion")]
     public string? SoftwareVersion { get; set; } = "0.0.1";
 
+    [JsonPropertyName("osName")]
     public string OperatingSystemName => RuntimeInformation.OSDescription;
 
+    [JsonPropertyName("processorArchitecture")]
     public string ProcessorArchitecture => RuntimeInformation.OSArchitecture.ToString();
 
-    public double AvailableStorageKB 
+    [JsonPropertyName("totalStorage")]
+     public double AvailableStorageKB 
     {
         get
         {
@@ -30,6 +43,7 @@ public class DeviceInformationModel
         }
     }
 
+    [JsonPropertyName("totalMemory")]
     public double AvailableMemoryKB
     {
         get
