@@ -10,26 +10,34 @@ using Newtonsoft.Json.Linq;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-
 using Tomlyn;
 
 namespace BrewHub;
 
 public sealed class IoTHubWorker : BackgroundService
 {
+#region Injected Fields
+
     private readonly IRootModel model;
     private readonly ILogger<IoTHubWorker> _logger;
 
+#endregion
+
+#region Fields
     private DeviceClient? iotClient;
     private SecurityProviderSymmetricKey? security;
     private DeviceRegistrationResult? result;
-    
+#endregion
+
+#region Constructor
     public IoTHubWorker(ILogger<IoTHubWorker> logger, IRootModel inmodel)
     {
         _logger = logger;
         model = inmodel;
     }
+#endregion
 
+#region Execute
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
@@ -58,7 +66,9 @@ public sealed class IoTHubWorker : BackgroundService
             _logger.LogCritical(LogEvents.ExecuteFailed,"IoTHub Device Worker: Failed {type} {message}", ex.GetType().Name, ex.Message);
         }
     }
+#endregion
 
+#region Startup
     private async Task LoadConfig()
     {
         try
@@ -80,7 +90,6 @@ public sealed class IoTHubWorker : BackgroundService
         {
             using var reader = File.OpenText("config.toml");
             var toml = reader.ReadToEnd();
-
             var config = Toml.ToModel<ConfigModel>(toml);
 
 #if false
@@ -92,9 +101,6 @@ public sealed class IoTHubWorker : BackgroundService
 
             _logger.LogDebug(LogEvents.ProvisionConfig,"Provisioning: Loaded config");
 
-            // For group enrollments, the second parameter must be the derived device key.
-            // See the ComputeDerivedSymmetricKeySample for how to generate the derived key.
-            // The secondary key could be included, but was left out for the simplicity of this sample.
             security = new SecurityProviderSymmetricKey(
                 config!.Provisioning!.Attestation!.RegistrationId,
                 config!.Provisioning!.Attestation!.SymmetricKey!.Value,
@@ -169,7 +175,9 @@ public sealed class IoTHubWorker : BackgroundService
             throw;
         }
     }
+#endregion
 
+#region Telemetry
     private async Task SendTelemetry()
     {
         // In the current model, the root component doesn't send any telemetry. Would need
@@ -240,8 +248,9 @@ public sealed class IoTHubWorker : BackgroundService
         return message;
     }
     private const string ContentApplicationJson = "application/json";
+#endregion
 
-
+#region Properties
     private async Task OnDesiredPropertiesUpdate(TwinCollection desiredProperties, object userContext)
     {
         try
@@ -358,4 +367,9 @@ public sealed class IoTHubWorker : BackgroundService
 
         _logger.LogDebug(LogEvents.PropertySendActuals,"Property: Updated reported properties as {update}",json);
     }
+#endregion
+
+#region Commands
+#endregion
+
 }
