@@ -26,7 +26,7 @@ public sealed class IoTHubWorker : BackgroundService
 {
 #region Injected Fields
 
-    private readonly IRootModel model;
+    private readonly IRootModel _model;
     private readonly ILogger<IoTHubWorker> _logger;
 
 #endregion
@@ -38,10 +38,10 @@ public sealed class IoTHubWorker : BackgroundService
 #endregion
 
 #region Constructor
-    public IoTHubWorker(ILogger<IoTHubWorker> logger, IRootModel inmodel)
+    public IoTHubWorker(ILogger<IoTHubWorker> logger, IRootModel model)
     {
         _logger = logger;
-        model = inmodel;
+        _model = model;
     }
 #endregion
 
@@ -51,11 +51,11 @@ public sealed class IoTHubWorker : BackgroundService
         try
         {
             _logger.LogInformation(LogEvents.ExecuteStartOK,"Started OK");
-            var device = model.DeviceInfo;
+            var device = _model.DeviceInfo;
             _logger.LogInformation(LogEvents.ExecuteDeviceInfo,"Device: {mfr} {model} {version}", device.Manufacturer, device.DeviceModel, device.SoftwareVersion);
 
-            if (!string.IsNullOrEmpty(model.dtmi))
-                _logger.LogInformation(LogEvents.ExecuteDeviceModel,"Model: {model}", model.dtmi);
+            if (!string.IsNullOrEmpty(_model.dtmi))
+                _logger.LogInformation(LogEvents.ExecuteDeviceModel,"Model: {model}", _model.dtmi);
 
             await LoadConfig();
             await ProvisionDevice();
@@ -63,7 +63,7 @@ public sealed class IoTHubWorker : BackgroundService
             while (!stoppingToken.IsCancellationRequested)
             {
                 await SendTelemetry();
-                await Task.Delay(model.TelemetryPeriod, stoppingToken);
+                await Task.Delay(_model.TelemetryPeriod, stoppingToken);
             }
 
             if (iotClient is not null)
@@ -85,7 +85,7 @@ public sealed class IoTHubWorker : BackgroundService
     {
         try
         {
-            var status = await model.LoadConfigAsync();
+            var status = await _model.LoadConfigAsync();
 
             _logger.LogInformation(LogEvents.ConfigOK,"Config: OK {status}",status);
         }
@@ -160,7 +160,7 @@ public sealed class IoTHubWorker : BackgroundService
 
             var options = new ClientOptions
             {
-                ModelId = model.dtmi
+                ModelId = _model.dtmi
             };
 
             iotClient = DeviceClient.Create(result.AssignedHub, auth, TransportType.Mqtt, options);
@@ -196,7 +196,7 @@ public sealed class IoTHubWorker : BackgroundService
             _logger.LogDebug(LogEvents.CommandReceived,"Command: Received {command}", methodRequest.Name);
 
             // By default, this is a command for the root
-            IComponentModel component = model;
+            IComponentModel component = _model;
             object? result = null;
 
             // Unless the command has multiple tokens
@@ -205,7 +205,7 @@ public sealed class IoTHubWorker : BackgroundService
             {
                 // Find the named component
                 var componentname = split[0];
-                var components = model.Components.Where(x=>x.Key == componentname);
+                var components = _model.Components.Where(x=>x.Key == componentname);
                 if (!components.Any())
                     throw new ApplicationException($"Unknown component: {componentname}");
                 else if (components.Skip(1).Any())
@@ -245,7 +245,7 @@ public sealed class IoTHubWorker : BackgroundService
 
         int numsent = 0;
 
-        foreach(var kvp in model.Components)
+        foreach(var kvp in _model.Components)
         {
             if (kvp.Value.HasTelemetry)
             {
@@ -326,10 +326,10 @@ public sealed class IoTHubWorker : BackgroundService
                     fullpropname = prop.Key;
 
                     // Is this 'property' actually one of our components?
-                    if (model.Components.ContainsKey(prop.Key))
+                    if (_model.Components.ContainsKey(prop.Key))
                     {
                         // In which case, we need to iterate again over the desired property's children
-                        var component = model.Components[prop.Key];
+                        var component = _model.Components[prop.Key];
                         var jo = prop.Value as JObject;
                         foreach(JProperty child in jo!.Children())
                         {
@@ -350,7 +350,7 @@ public sealed class IoTHubWorker : BackgroundService
                     else
                     {
                         // Update the property
-                        var updated = model.SetProperty(prop.Key,prop.Value);
+                        var updated = _model.SetProperty(prop.Key,prop.Value);
                         _logger.LogInformation(LogEvents.PropertyOK,"Property: OK. Updated {property} to {updated}",fullpropname,updated);
 
                         // Acknowledge the request back to hub
