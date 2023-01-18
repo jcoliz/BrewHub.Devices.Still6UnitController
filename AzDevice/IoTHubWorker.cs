@@ -13,6 +13,15 @@ using Tomlyn;
 
 namespace AzDevice;
 
+/// <summary>
+/// Solution-independent background service for managing connection
+/// to Azure IoT Hub from a device
+/// </summary>
+/// <remarks>
+/// Implements IoT Plug and Play conventions.
+/// Connects using DPS using the same config.toml as Azure IoT Edge
+/// </remarks>
+
 public sealed class IoTHubWorker : BackgroundService
 {
 #region Injected Fields
@@ -41,7 +50,7 @@ public sealed class IoTHubWorker : BackgroundService
     {
         try
         {
-            _logger.LogInformation(LogEvents.ExecuteStartOK,"IoTHub Device Worker: Started OK");
+            _logger.LogInformation(LogEvents.ExecuteStartOK,"Started OK");
             var device = model.DeviceInfo;
             _logger.LogInformation(LogEvents.ExecuteDeviceInfo,"Device: {mfr} {model} {version}", device.Manufacturer, device.DeviceModel, device.SoftwareVersion);
 
