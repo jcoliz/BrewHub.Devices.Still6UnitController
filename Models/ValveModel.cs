@@ -1,5 +1,7 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
+using System.Text;
+using System.Xml;
 using AzDevice.Models;
 using Newtonsoft.Json.Linq;
 
@@ -53,13 +55,20 @@ public class ValveModel: IComponentModel
 
     public override string ToString()
     {
-        return $"{(Target ?? "Component")}@{Relay}";
+        return $"{dtmi} {(Target ?? "Unnamed")}@{Relay}";
     }
 
     public IDictionary<string,object> GetTelemetry() => throw new NotImplementedException();
 
-    Task<object> IComponentModel.DoCommandAsync(string name)
+    Task<object> IComponentModel.DoCommandAsync(string name, byte[] data)
     {
-        return Task.FromResult<object> (new()); // (new int[] { });
+        if (name != "OpenForDuration")
+            throw new NotImplementedException($"{this} has no command {name}");
+
+        var datastr = Encoding.UTF8.GetString(data);
+        var param = System.Text.Json.JsonSerializer.Deserialize<string>(datastr);
+        var span = XmlConvert.ToTimeSpan(param!);
+
+        return Task.FromResult<object> (new());
     }
 }

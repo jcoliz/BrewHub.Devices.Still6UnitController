@@ -93,8 +93,11 @@ public class StillControllerModel: IRootModel
         return result!;
     }
 
-    Task<object> IComponentModel.DoCommandAsync(string name)
+    Task<object> IComponentModel.DoCommandAsync(string name, byte[] data)
     {
+        if (name != "ScanModBus")
+            throw new NotImplementedException($"{dtmi} has no command {name}");
+
         return Task.FromResult<object> (new int[] { 1, 2, 3 });
     }
 

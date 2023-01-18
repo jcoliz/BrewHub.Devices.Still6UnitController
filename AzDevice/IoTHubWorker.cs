@@ -205,7 +205,7 @@ public sealed class IoTHubWorker : BackgroundService
                 command = split[1];
             }
 
-            result = await component.DoCommandAsync(command);
+            result = await component.DoCommandAsync(command,methodRequest.Data);
             var json = JsonSerializer.Serialize(result);
             var response = Encoding.UTF8.GetBytes(json);
 

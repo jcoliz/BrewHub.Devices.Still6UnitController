@@ -12,5 +12,5 @@ public interface IComponentModel
 
     IDictionary<string,object> GetTelemetry();
 
-    Task<object> DoCommandAsync(string name);
+    Task<object> DoCommandAsync(string name, byte[] data);
 }
