@@ -181,32 +181,50 @@ public sealed class IoTHubWorker : BackgroundService
     #region Commands
     private async Task<MethodResponse> OnCommandReceived(MethodRequest methodRequest, object userContext)
     {
-        _logger.LogDebug(LogEvents.CommandReceived,"Command: Received {command}", methodRequest.Name);
-
-        // By default, this is a command for the root
         var command = methodRequest.Name;
-        IComponentModel component = model;
-        object? result = null;
-
-        // Unless the command has multiple tokens
-        var split = methodRequest.Name.Split('*');
-        if (split.Skip(1).Any())
+        try
         {
-            // Find the named component
-            var componentname = split[0];
-            var components = model.Components.Where(x=>x.Key == componentname);
-            if (!components.Any())
-                throw new ApplicationException($"Unknown component: {componentname}");
-            else if (components.Skip(1).Any())
-                throw new ApplicationException($"Ambiguous component: {componentname}");
-            component = components.Single().Value;
-            command = split[1];
-        }
+            _logger.LogDebug(LogEvents.CommandReceived,"Command: Received {command}", methodRequest.Name);
 
-        result = await component.DoCommandAsync(command);
-        var json = JsonSerializer.Serialize(result);
-        var response = Encoding.UTF8.GetBytes(json);
-        return new MethodResponse(response, (int)HttpStatusCode.OK);
+            // By default, this is a command for the root
+            IComponentModel component = model;
+            object? result = null;
+
+            // Unless the command has multiple tokens
+            var split = methodRequest.Name.Split('*');
+            if (split.Skip(1).Any())
+            {
+                // Find the named component
+                var componentname = split[0];
+                var components = model.Components.Where(x=>x.Key == componentname);
+                if (!components.Any())
+                    throw new ApplicationException($"Unknown component: {componentname}");
+                else if (components.Skip(1).Any())
+                    throw new ApplicationException($"Ambiguous component: {componentname}");
+                component = components.Single().Value;
+                command = split[1];
+            }
+
+            result = await component.DoCommandAsync(command);
+            var json = JsonSerializer.Serialize(result);
+            var response = Encoding.UTF8.GetBytes(json);
+
+            _logger.LogDebug(LogEvents.CommandOK,"Command: OK {command} Response: {response}", methodRequest.Name,json);
+
+            return new MethodResponse(response, (int)HttpStatusCode.OK);
+        }
+        catch (AggregateException ex)
+        {
+            foreach (Exception exception in ex.InnerExceptions)
+            {
+                _logger.LogError(LogEvents.CommandMultipleFailure, exception, "Command: {command} Multiple failures", command);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(LogEvents.CommandSingleFailure,ex,"Command: {command} Failed", command);
+        }
+        return new MethodResponse(Encoding.UTF8.GetBytes("{}"), (int)HttpStatusCode.InternalServerError);
     }
     #endregion
 

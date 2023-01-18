@@ -43,8 +43,9 @@ public class LogEvents
     // 10. Commands
     public const int CommandOK         = 1100;
     public const int CommandReceived   = 1101;
-    public const int CommandError      = 1181;
-
+    public const int CommandSingleFailure = 1181;
+    public const int CommandMultipleFailure = 1182;
+ 
     // 20. Properties
     public const int PropertyOK         = 2000;
     public const int PropertyRequest = 2001;
