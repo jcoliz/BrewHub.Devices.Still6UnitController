@@ -218,7 +218,7 @@ public sealed class IoTHubWorker : BackgroundService
             var json = JsonSerializer.Serialize(result);
             var response = Encoding.UTF8.GetBytes(json);
 
-            _logger.LogDebug(LogEvents.CommandOK,"Command: OK {command} Response: {response}", methodRequest.Name,json);
+            _logger.LogInformation(LogEvents.CommandOK,"Command: OK {command} Response: {response}", methodRequest.Name,json);
 
             return new MethodResponse(response, (int)HttpStatusCode.OK);
         }
