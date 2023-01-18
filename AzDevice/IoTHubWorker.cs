@@ -240,10 +240,21 @@ public sealed class IoTHubWorker : BackgroundService
     #region Telemetry
     private async Task SendTelemetry()
     {
-        // In the current model, the root component doesn't send any telemetry. Would need
-        // some updating here if that changes
-
         int numsent = 0;
+
+        // Send telementry from root
+
+        if (_model.HasTelemetry)
+        {
+            // Obtain readings from this component
+            var readings = _model.GetTelemetry();
+
+            // Send them
+            await SendTelemetryMessageAsync(readings, null);
+            ++numsent;
+        }
+
+        // Send telemetry from components
 
         foreach(var kvp in _model.Components)
         {
@@ -257,14 +268,8 @@ public sealed class IoTHubWorker : BackgroundService
                 // Obtain readings from this component
                 var readings = kvp.Value.GetTelemetry();
 
-                // Make a message out of it
-                using var message = CreateTelemetryMessage(readings,kvp.Key);
-
-                // Send the message
-                await iotClient!.SendEventAsync(message);
-                var detailslist = readings.Select(x=>$"{x.Key}={x.Value:F1}");
-                var details = string.Join(' ',detailslist);
-                _logger.LogDebug(LogEvents.TelemetrySentOne,"Telemetry: {component} {id} {details}", kvp.Key, kvp.Value, details);
+                // Send them
+                await SendTelemetryMessageAsync(readings, kvp);
                 ++numsent;
             }
         }
@@ -273,6 +278,21 @@ public sealed class IoTHubWorker : BackgroundService
             _logger.LogInformation(LogEvents.TelemetryOK,"Telemetry: OK {count} messages",numsent);            
         else
             _logger.LogWarning(LogEvents.TelemetryNotSent,"Telemetry: No components had available readings. Nothing sent");
+    }
+
+    private async Task SendTelemetryMessageAsync(IDictionary<string, object> telemetryPairs, KeyValuePair<string, IComponentModel>? component = default)
+    {
+        // Make a message out of it
+        using var message = CreateTelemetryMessage(telemetryPairs,component?.Key);
+
+        // Send the message
+        await iotClient!.SendEventAsync(message);
+        var detailslist = telemetryPairs.Select(x=>$"{x.Key}={x.Value:F1}");
+        var details = string.Join(' ',detailslist);
+        if (component is null)
+            _logger.LogDebug(LogEvents.TelemetrySentRoot,"Telemetry: Root {details}", details);
+        else
+            _logger.LogDebug(LogEvents.TelemetrySentOne,"Telemetry: {component} {id} {details}", component?.Key, component?.Value, details);
     }
 
     // Below is from https://github.com/Azure/azure-iot-sdk-csharp/blob/1e97d800061aca1ab812ea32d47bac2442c1ed26/iothub/device/samples/solutions/PnpDeviceSamples/PnpConvention/PnpConvention.cs#L40

@@ -40,7 +40,8 @@ public class LogEvents
     // 5. Telemetry
     public const int TelemetryOK        = 500;
     public const int TelemetrySentOne   = 501;
-    public const int TelemetryNotSent = 570;
+    public const int TelemetrySentRoot  = 502;
+    public const int TelemetryNotSent   = 570;
 
     // 10. Commands
     public const int CommandOK         = 1100;
