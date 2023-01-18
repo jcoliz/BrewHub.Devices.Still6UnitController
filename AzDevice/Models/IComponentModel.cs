@@ -11,4 +11,6 @@ public interface IComponentModel
     object SetProperty(string key, object value);
 
     IDictionary<string,object> GetTelemetry();
+
+    Task<object> DoCommandAsync(string name);
 }

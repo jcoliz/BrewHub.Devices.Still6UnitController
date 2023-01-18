@@ -74,4 +74,9 @@ public class SensorModel: IComponentModel
     {
         return $"{(Target ?? "Component")}@{LogicalAddress}";
     }
+
+    Task<object> IComponentModel.DoCommandAsync(string name)
+    {
+        throw new NotImplementedException();
+    }
 }

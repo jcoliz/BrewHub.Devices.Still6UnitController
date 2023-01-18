@@ -58,4 +58,8 @@ public class ValveModel: IComponentModel
 
     public IDictionary<string,object> GetTelemetry() => throw new NotImplementedException();
 
+    Task<object> IComponentModel.DoCommandAsync(string name)
+    {
+        return Task.FromResult<object> (new()); // (new int[] { });
+    }
 }

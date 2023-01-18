@@ -93,5 +93,10 @@ public class StillControllerModel: IRootModel
         return result!;
     }
 
+    Task<object> IComponentModel.DoCommandAsync(string name)
+    {
+        return Task.FromResult<object> (new int[] { 1, 2, 3 });
+    }
+
     IDictionary<string,object> IComponentModel.GetTelemetry() => throw new NotImplementedException(); 
 }
