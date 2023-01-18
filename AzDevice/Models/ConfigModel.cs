@@ -2,7 +2,7 @@
 
 using Tomlyn.Model;
 
-namespace BrewHub.Controller.Models;
+namespace AzDevice.Models;
 
 public class ConfigModel : ITomlMetadataProvider
 {

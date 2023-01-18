@@ -1,4 +1,4 @@
-namespace BrewHub.Controller;
+namespace AzDevice;
 
 public class LogEvents
 {
@@ -13,6 +13,7 @@ public class LogEvents
     // 1. Execute
     public const int ExecuteStartOK     = 100;
     public const int ExecuteDeviceInfo  = 101;
+    public const int ExecuteDeviceModel = 102;
     public const int ExecuteFinished    = 110;
     public const int ExecuteFailed      = 190;
 

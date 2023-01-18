@@ -3,7 +3,7 @@
 using System.Net;
 using System.Text.Json.Serialization;
 
-namespace BrewHub.Controller.Models;
+namespace AzDevice.Models;
 
 public class PropertyChangeAck
 {

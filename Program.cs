@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
-using BrewHub;
+using AzDevice;
+using AzDevice.Models;
 using BrewHub.Controller.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

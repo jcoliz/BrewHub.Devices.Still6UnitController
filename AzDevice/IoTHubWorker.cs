@@ -1,7 +1,6 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
-using BrewHub.Controller;
-using BrewHub.Controller.Models;
+using AzDevice.Models;
 using Microsoft.Azure.Devices.Client;
 using Microsoft.Azure.Devices.Provisioning.Client;
 using Microsoft.Azure.Devices.Provisioning.Client.Transport;
@@ -12,7 +11,7 @@ using System.Text;
 using System.Text.Json;
 using Tomlyn;
 
-namespace BrewHub;
+namespace AzDevice;
 
 public sealed class IoTHubWorker : BackgroundService
 {
@@ -45,6 +44,10 @@ public sealed class IoTHubWorker : BackgroundService
             _logger.LogInformation(LogEvents.ExecuteStartOK,"IoTHub Device Worker: Started OK");
             var device = model.DeviceInfo;
             _logger.LogInformation(LogEvents.ExecuteDeviceInfo,"Device: {mfr} {model} {version}", device.Manufacturer, device.DeviceModel, device.SoftwareVersion);
+
+            if (!string.IsNullOrEmpty(model.dtmi))
+                _logger.LogInformation(LogEvents.ExecuteDeviceModel,"Model: {model}", model.dtmi);
+
             await LoadConfig();
             await ProvisionDevice();
             await OpenConnection();

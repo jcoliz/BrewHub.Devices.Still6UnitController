@@ -1,21 +1,11 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
+using AzDevice.Models;
+using Newtonsoft.Json.Linq;
 using System.Text.Json;
 using System.Xml;
-using Newtonsoft.Json.Linq;
 
 namespace BrewHub.Controller.Models;
-
-public interface IRootModel: IComponentModel
-{
-    public TimeSpan TelemetryPeriod { get; }
-
-    public DeviceInformationModel DeviceInfo { get; }
-
-    IDictionary<string,IComponentModel> Components { get; }
-
-    Task<string> LoadConfigAsync();
-}
 
 public class StillControllerModel: IRootModel
 {

@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
-
-namespace BrewHub.Controller.Models;
 using System.Text.Json.Serialization;
+
+namespace AzDevice.Models;
 
 public class DeviceInformationModel
 {
@@ -26,7 +26,7 @@ public class DeviceInformationModel
     public string ProcessorArchitecture => RuntimeInformation.OSArchitecture.ToString();
 
     [JsonPropertyName("totalStorage")]
-     public double AvailableStorageKB 
+    public double AvailableStorageKB 
     {
         get
         {
