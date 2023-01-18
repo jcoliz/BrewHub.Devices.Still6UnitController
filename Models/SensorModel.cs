@@ -1,5 +1,6 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
+using System.Text;
 using AzDevice.Models;
 using Newtonsoft.Json.Linq;
 
@@ -77,6 +78,12 @@ public class SensorModel: IComponentModel
 
     Task<object> IComponentModel.DoCommandAsync(string name, byte[] data)
     {
-        throw new NotImplementedException();
-    }
-}
+        if (name != "AlterPhysicalAddress")
+            throw new NotImplementedException($"{this} has no command {name}");
+
+        var datastr = Encoding.UTF8.GetString(data);
+        var param = System.Text.Json.JsonSerializer.Deserialize<int>(datastr);
+        PhysicalAddress = param;
+
+        return Task.FromResult<object> (new());
+    }}
