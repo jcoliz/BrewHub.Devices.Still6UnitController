@@ -8,7 +8,7 @@ namespace BrewHub.Controller.Models;
 
 public class SensorModel: IComponentModel
 {
-    public string dtmi => "dtmi:brewhub:logical:xy_02;1";
+    public string dtmi => "dtmi:brewhub:logical:xy_md02;1";
     public string? Target { get; set; }
     public int LogicalAddress { get; set; }
     public int PhysicalAddress { get; private set; }
@@ -73,7 +73,7 @@ public class SensorModel: IComponentModel
 
     public override string ToString()
     {
-        return $"{(Target ?? "Component")}@{LogicalAddress}";
+        return $"{dtmi} {(Target ?? "Unnamed")}@{LogicalAddress}";
     }
 
     Task<object> IComponentModel.DoCommandAsync(string name, byte[] data)
