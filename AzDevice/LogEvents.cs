@@ -41,10 +41,9 @@ public class LogEvents
     public const int TelemetryNotSent = 570;
 
     // 10. Commands
-    public const int Command1OK        = 1100;
-    public const int Command1Error     = 1180;
-    public const int Command2OK        = 1200;
-    public const int Command2Error     = 1280;
+    public const int CommandOK         = 1100;
+    public const int CommandReceived   = 1101;
+    public const int CommandError      = 1181;
 
     // 20. Properties
     public const int PropertyOK         = 2000;

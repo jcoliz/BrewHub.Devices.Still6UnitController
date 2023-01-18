@@ -167,10 +167,8 @@ public sealed class IoTHubWorker : BackgroundService
             // Attach a callback for updates to the module twin's desired properties.
             await iotClient.SetDesiredPropertyUpdateCallbackAsync(OnDesiredPropertiesUpdate, null);
 
-    #if false        
             // Register callback for health check command
-            await _moduleClient.SetMethodHandlerAsync(HealthCheckCommand, HealthCheckAsync, null);
-    #endif
+            await iotClient.SetMethodDefaultHandlerAsync(OnCommandReceived, null);
         }
         catch (Exception ex)
         {
@@ -178,9 +176,18 @@ public sealed class IoTHubWorker : BackgroundService
             throw;
         }
     }
-#endregion
+    #endregion
 
-#region Telemetry
+    #region Commands
+    private Task<MethodResponse> OnCommandReceived(MethodRequest methodRequest, object userContext)
+    {
+        _logger.LogDebug(LogEvents.CommandReceived,"Command: Received {command}", methodRequest.Name);
+
+        return Task.FromResult<MethodResponse>(new MethodResponse(new byte[] {}, (int)HttpStatusCode.NotImplemented));
+    }
+    #endregion
+
+    #region Telemetry
     private async Task SendTelemetry()
     {
         // In the current model, the root component doesn't send any telemetry. Would need
