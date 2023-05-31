@@ -1,105 +1,191 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
+// Use of this source code is governed by the MIT license (see LICENSE file)
 
 using AzDevice.Models;
-using Newtonsoft.Json.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Xml;
 
-namespace BrewHub.Controller.Models;
-
-public class StillControllerModel: IRootModel
+/// <summary>
+/// Implementation for IoT Plug-and-play example temperature controller
+/// </summary>
+/// <remarks>
+/// "dtmi:com:example:TemperatureController;2";
+/// </remarks>
+public class ControllerModel : IRootModel
 {
-    protected MachineryInfo? MachineryInfo;
-    public TimeSpan TelemetryPeriod { get; protected set; } = TimeSpan.FromSeconds(30);
+    #region Properties
 
-    public string dtmi => "dtmi:brewhub:controller:still;1";
+    [JsonPropertyName("serialNumber")]
+    public string? SerialNumber { get; private set; } = "Unassigned";
 
-    public DeviceInformationModel DeviceInfo => new DeviceInformationModel();
+    // Note that telemetry period is not strictly part of the DTMI. Still,
+    // it's nice to be able to set it in config, and send down changes to it
 
-    public bool HasTelemetry => false;
-
-    public IDictionary<string,IComponentModel> Components { get; } = new Dictionary<string,IComponentModel>()
-    {
-        { "Sensor_1", new SensorModel() },
-        { "Sensor_2", new SensorModel() },
-        { "Sensor_3", new SensorModel() },
-        { "Valve_1", new ValveModel() },
-        { "Valve_2", new ValveModel() },
-        { "Valve_3", new ValveModel() },
-    };
-
-    public async Task<string> LoadConfigAsync()
-    {
-        // Machinery info can OPTIONALLY be supplied via local machine config.
-        // Alternately, it can be sent down from the cloud as a desired property
-
-        var status = "No config found";
-        if (File.Exists("machineryinfo.json"))
+    [JsonPropertyName("telemetryPeriod")]
+    public string TelemetryPeriod 
+    { 
+        get
         {
-            using var stream = File.OpenRead("machineryinfo.json");
-            var options = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
-            MachineryInfo = await JsonSerializer.DeserializeAsync<MachineryInfo>(stream,options);
-
-            if (MachineryInfo is null)
-                throw new ApplicationException("Unable to deserialize machinery info file");
-
-            status = MachineryInfo.ToString();
+            return XmlConvert.ToString(_TelemetryPeriod);
+        } 
+        private set
+        {
+            _TelemetryPeriod = XmlConvert.ToTimeSpan(value);
         }
-
-        return status;
     }
+    private TimeSpan _TelemetryPeriod = TimeSpan.Zero;
 
-    public object SetProperty(string key, object value)
+    #endregion
+
+    #region Telemetry
+
+    public class Telemetry
     {
-        object? result = null;
-        if (key == "machineryInfo")
+        [JsonPropertyName("workingSet")]
+        public double WorkingSetKiB
         {
-            // Sending NULL is a valid action here. It will show up as a JValue of Type Null
-            if (value is JValue jv && jv.Type == JTokenType.Null)
+            get
             {
-                MachineryInfo = new MachineryInfo();
-                result = MachineryInfo;
+                var ws = System.Diagnostics.Process.GetCurrentProcess().WorkingSet64;
 
-                return result;
+                // Convert to Kibibits
+                return (double)ws / (1024.0/8.0);
             }
-
-            var desired = value as Newtonsoft.Json.Linq.JObject;
-            if (desired is null)
-                throw new ApplicationException($"Failed to extract value from {value}");
-    
-            var newval = desired.ToObject<MachineryInfo>();
-            if (newval is null)
-                throw new FormatException($"Failed to extract MachineryInfo from {value}");
-
-            MachineryInfo = newval;
-            result = MachineryInfo;
         }
-        else if (key == "TelemetryPeriod")
-        {
-            var desired = value as Newtonsoft.Json.Linq.JValue;
-            if (desired is null)
-                throw new ApplicationException($"Failed to extract value from {value}");
-
-            var newval = (string?)desired;
-            if (newval is null)
-                throw new FormatException($"Failed to extract string from {value}");
-
-            TelemetryPeriod = XmlConvert.ToTimeSpan(newval);
-            result = newval;
-        }
-        else
-            throw new ApplicationException($"Does not contain property '{key}'");
-
-        return result!;
     }
 
-    Task<object> IComponentModel.DoCommandAsync(string name, byte[] data)
+
+    #endregion
+
+    #region Commands
+
+    protected Task<object> Reboot(string jsonparams)
     {
-        if (name != "ScanModBus")
-            throw new NotImplementedException($"{dtmi} has no command {name}");
+        var delay = (jsonparams.Length > 0) ? JsonSerializer.Deserialize<int>(jsonparams) : 0;
 
-        return Task.FromResult<object> (new int[] { 1, 2, 3 });
+        // TODO: Do something with this command
+
+        return Task.FromResult<object>(new());
     }
 
-    IDictionary<string,object> IComponentModel.GetTelemetry() => throw new NotImplementedException(); 
+    #endregion
+
+    #region Log Identity
+    /// <summary>
+    /// How should this model appear in the logs?
+    /// </summary>
+    /// <returns>String to identify the current model</returns>
+    public override string ToString()
+    {
+        return $"{DeviceInformation.Manufacturer} {DeviceInformation.DeviceModel} S/N:{SerialNumber} ver:{DeviceInformation.SoftwareVersion}";
+    }
+    #endregion
+
+    #region IRootModel
+
+    /// <summary>
+    /// How often to send telemetry, or zero to avoid sending any telemetry right now
+    /// </summary>
+    TimeSpan IRootModel.TelemetryPeriod => _TelemetryPeriod;
+
+    /// <summary>
+    /// The components which are contained within this one
+    /// </summary>
+    [JsonIgnore]
+    public IDictionary<string, IComponentModel> Components { get; } = new Dictionary<string, IComponentModel>()
+    {
+        { 
+            "deviceInformation", 
+            new DeviceInformationModel()
+        },
+        {
+            "thermostat1",
+            new ThermostatModel()
+        },
+        {
+            "thermostat2",
+            new ThermostatModel()
+        },
+    };
+    #endregion
+
+    #region Internals
+    private DeviceInformationModel DeviceInformation => (Components["deviceInformation"] as DeviceInformationModel)!;
+
+    #endregion
+
+    #region IComponentModel
+
+    /// <summary>
+    /// Identifier for this model
+    /// </summary>
+    [JsonIgnore]
+    public string dtmi => "dtmi:com:example:TemperatureController;2";
+
+    /// <summary>
+    /// Get an object containing all current telemetry
+    /// </summary>
+    /// <returns>All telemetry we wish to send at this time, or null for don't send any</returns>
+    object? IComponentModel.GetTelemetry()
+    {
+        // Take the reading, return it
+        return new Telemetry();
+    }
+
+    /// <summary>
+    /// Set a particular property to the given value
+    /// </summary>
+    /// <param name="key">Which property</param>
+    /// <param name="jsonvalue">Value to set (will be deserialized from JSON)</param>
+    /// <returns>The unserialized new value of the property</returns>
+    object IComponentModel.SetProperty(string key, string jsonvalue)
+    {
+        if (key != "telemetryPeriod")
+            throw new NotImplementedException($"Property {key} is not implemented on {dtmi}");
+
+        return TelemetryPeriod = System.Text.Json.JsonSerializer.Deserialize<string>(jsonvalue)!;
+    }
+
+    /// <summary>
+    /// Get an object containing all properties known to this model
+    /// </summary>
+    /// <returns>All known properties, and their current state</returns>
+    object IComponentModel.GetProperties()
+    {
+        return this as ControllerModel;
+    }
+
+    /// <summary>
+    /// Set the application intitial state from the supplied configuration values
+    /// </summary>
+    /// <param name="values">Dictionary of all known configuration values which could apply to this component</param>
+    void IComponentModel.SetInitialState(IDictionary<string, string> values)
+    {
+        if (values.ContainsKey("Version"))
+            DeviceInformation.SoftwareVersion = values["Version"];
+
+        if (values.ContainsKey("serialNumber"))
+            SerialNumber = values["serialNumber"];
+
+        if (values.ContainsKey("telemetryPeriod"))
+            TelemetryPeriod = values["telemetryPeriod"];
+    }
+
+    /// <summary>
+    /// Execute the given command
+    /// </summary>
+    /// <param name="name">Name of the command</param>
+    /// <param name="jsonparams">Parameters for the command (will be deserialized from JSON)</param>
+    /// <returns>Unserialized result of the action, or new() for empty result</returns>
+    Task<object> IComponentModel.DoCommandAsync(string name, string jsonparams)
+    {
+        return name switch
+        {
+            "reboot" => Reboot(jsonparams),
+            _ => throw new NotImplementedException($"Command {name} is not implemented on {dtmi}")
+        };
+    }
+
+    #endregion    
 }
