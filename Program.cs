@@ -1,9 +1,6 @@
 ﻿// Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
-using AzDevice.Models;
 using BrewHub.Controller.Mqtt;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 using IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((hostContext, services) =>

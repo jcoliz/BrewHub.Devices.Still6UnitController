@@ -1,7 +1,7 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
-using AzDevice.Models;
+using BrewHub.Controller.Mqtt;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml;

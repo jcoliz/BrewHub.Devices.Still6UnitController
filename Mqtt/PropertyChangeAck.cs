@@ -3,7 +3,7 @@
 using System.Net;
 using System.Text.Json.Serialization;
 
-namespace AzDevice.Models;
+namespace BrewHub.Controller.Mqtt;
 
 public class PropertyChangeAck
 {

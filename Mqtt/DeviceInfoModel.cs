@@ -3,7 +3,7 @@
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 
-namespace AzDevice.Models;
+namespace BrewHub.Controller.Mqtt;
 
 /// <summary>
 /// Standardized implementation of "dtmi:azure:DeviceManagement:DeviceInformation;1"
