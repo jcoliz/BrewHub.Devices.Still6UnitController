@@ -288,7 +288,7 @@ public class MqttWorker : BackgroundService
                 if (readings is not null)
                 {
                     // Send them
-                    await SendTelemetryMessageAsync(readings, new(string.Empty, _model));
+                    await SendDataMessageAsync(readings, new(string.Empty, _model));
                     ++numsent;
                 }
 
@@ -306,7 +306,7 @@ public class MqttWorker : BackgroundService
                         // into a single message.
 
                         // Send them
-                        await SendTelemetryMessageAsync(readings, kvp);
+                        await SendDataMessageAsync(readings, kvp);
                         ++numsent;
                     }
                 }
@@ -334,7 +334,13 @@ public class MqttWorker : BackgroundService
 
     private int sequencenumber = 1;
 
-    private async Task SendTelemetryMessageAsync(object telemetry, KeyValuePair<string, IComponentModel> component)
+    /// <summary>
+    /// Send a single node or device data message
+    /// </summary>
+    /// <remarks>
+    /// Can be telemetry or properties or both
+    /// </remarks>
+    private async Task SendDataMessageAsync(object telemetry, KeyValuePair<string, IComponentModel> component)
     {
         // Send Node data message
 
@@ -367,42 +373,51 @@ public class MqttWorker : BackgroundService
         await mqttClient!.PublishAsync(message, CancellationToken.None); // Since 3.0.5 with CancellationToken
 
         // Log about it
-        _logger.LogDebug(LogEvents.TelemetrySentOne,"Telemetry: {topic} {message}", topic, json);
+        _logger.LogDebug(LogEvents.DataMessageSent,"Message: Sent {topic} {message}", topic, json);
     }
 #endregion
 
 #region Properties
     /// <summary>
-    ///  Single update of all reported properties at once
+    ///  Send a separate message to update each component's properties
     /// </summary>
-    private Task UpdateReportedProperties()
+    private async Task UpdateReportedProperties()
     {
         try
         {
             if (DateTimeOffset.Now < NextPropertyUpdateTime)
-                return Task.CompletedTask;
+                return;
 
-            // Create dictionary of root properties
-            var root = _model.GetProperties();
-            var j1 = JsonSerializer.Serialize(root);
-            var d1 = JsonSerializer.Deserialize<Dictionary<string, object>>(j1);
+            // Get device properties
+            var props = _model.GetProperties();
 
-            // Create dictionary of components with their properties
-            var d2 = _model.Components.ToDictionary(x => x.Key, x => x.Value.GetProperties());
+            // If properties exist
+            if (props is not null)
+            {
+                // We can just send them as a telemetry messages
+                // Right now telemetry and props messages are no different
+                await SendDataMessageAsync(props, new(string.Empty, _model));
+            }
 
-            // Merge them
-            var d3 = new[] { d1, d2 }; 
-            var update = d3.SelectMany(x => x!).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            // Send properties from components
 
-#if false
-            // Convert to json and send them
-            var json = JsonSerializer.Serialize(update);
-            var resulttc = new TwinCollection(json);
-            await iotClient!.UpdateReportedPropertiesAsync(resulttc);
-            _logger.LogDebug(LogEvents.PropertyReportedDetail,"Property: Reported details {detail}. Next update after {delay}",json,PropertyUpdatePeriod);
-#endif
+            foreach(var kvp in _model.Components)
+            {
+                // Obtain readings from this component
+                props = _model.GetProperties();
+                if (props is not null)
+                {
+                    // Note that official PnP messages can only come from a single component at a time.
+                    // This is a weakness that drives up the message count. So, will have to decide later
+                    // if it's worth keeping this, or scrapping PnP compatibility and collecting them all
+                    // into a single message.
 
-            _logger.LogInformation(LogEvents.PropertyReportedOK,"Property: OK Reported {count} properties",update.Count);
+                    // Send them
+                    await SendDataMessageAsync(props, kvp);
+                }
+            }
+
+            _logger.LogInformation(LogEvents.PropertyReportedOK,"Property: Reported OK. Next update after {delay}",PropertyUpdatePeriod);
 
             // Manage back-off of property updates
             NextPropertyUpdateTime = DateTimeOffset.Now + PropertyUpdatePeriod;
@@ -428,8 +443,6 @@ public class MqttWorker : BackgroundService
         {
             _logger.LogError(LogEvents.PropertyReportSingleError,ex,"Property: Reporting error");
         }
-
-        return Task.CompletedTask;
     }
     #endregion
 }

@@ -49,6 +49,7 @@ public class LogEvents
     public const int TelemetryOK                = 500;
     public const int TelemetrySentOne           = 501;
     public const int TelemetrySentRoot          = 502;
+    public const int DataMessageSent            = 503;
     public const int TelemetryNotSent           = 577;
     public const int TelemetryNoPeriod          = 578;
     public const int TelemetrySingleError       = 687;
