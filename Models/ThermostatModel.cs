@@ -33,7 +33,8 @@ public class ThermostatModel : IComponentModel
         public Telemetry(double target)
         {
             var dt = DateTimeOffset.UtcNow;
-            Temperature = target + dt.Hour * 100.0 + dt.Minute + dt.Second / 100.0;            
+            var phase = ((int)target) % 10;
+            Temperature = target + 20.0 * Math.Sin((double)(dt.Second + phase * 3) / 30.0 * Math.PI);
         }
 
         [JsonPropertyName("temperature")]
