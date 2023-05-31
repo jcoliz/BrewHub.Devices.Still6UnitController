@@ -35,6 +35,7 @@ public class MqttWorker : BackgroundService
     #region Fields
     private IManagedMqttClient? mqttClient;
     string deviceid = string.Empty;
+    string basetopic = string.Empty;
     private DateTimeOffset NextPropertyUpdateTime = DateTimeOffset.MinValue;
     private TimeSpan PropertyUpdatePeriod = TimeSpan.FromMinutes(1);
     private readonly TimeSpan TelemetryRetryPeriod = TimeSpan.FromMinutes(1);
@@ -212,6 +213,9 @@ public class MqttWorker : BackgroundService
 
             var server = GetConfig("MQTT:server");
             var port = _config["MQTT:port"] ?? "1883";
+            var topic1 = GetConfig("MQTT:topic");
+            var site = _config["MQTT:site"] ?? "none";
+            basetopic = $"{topic1}/{site}";
 
             MqttClientOptionsBuilder builder = new MqttClientOptionsBuilder()
                                         .WithClientId(deviceid)
@@ -334,8 +338,7 @@ public class MqttWorker : BackgroundService
     {
         // Send Node data message
 
-        var suffix = string.IsNullOrEmpty(component.Key) ? $"NDATA/{deviceid}" : $"DDATA/{deviceid}/{component.Key}";
-        var topic = $"spB1.0/testing/{suffix}";
+        var topic = string.IsNullOrEmpty(component.Key) ? $"{basetopic}/NDATA/{deviceid}" : $"{basetopic}/DDATA/{deviceid}/{component.Key}";
         
         // Create a dictionary of telemetry payload
 
