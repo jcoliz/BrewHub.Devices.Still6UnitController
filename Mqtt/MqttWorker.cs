@@ -17,6 +17,7 @@ public record MessagePayload
     public long Timestamp { get; init; }
     public int Seq { get; init; }
     public string? Model { get; init; }
+    public Dictionary<string, object>? Metrics { get; init; }
 }
 
 public class MqttWorker : BackgroundService
@@ -343,20 +344,15 @@ public class MqttWorker : BackgroundService
         
         // Create a dictionary of message envelope
 
-        var envelope = new MessagePayload() 
+        var payload = new MessagePayload()
         { 
             Model = component.Value.dtmi, 
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            Seq = sequencenumber++
+            Seq = sequencenumber++,
+            Metrics = telemetry_dict
         };
-        var envelope_json = JsonSerializer.Serialize(envelope);
-        var envelope_dict = JsonSerializer.Deserialize<Dictionary<string, object>>(envelope_json);
 
-        // Merge them
-        var d3 = new[] { telemetry_dict, envelope_dict }; 
-        var message_dict = d3.SelectMany(x => x!).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-        var json = System.Text.Json.JsonSerializer.Serialize(message_dict);
+        var json = System.Text.Json.JsonSerializer.Serialize(payload);
         
         var message = new MqttApplicationMessageBuilder()
             .WithTopic(topic)
