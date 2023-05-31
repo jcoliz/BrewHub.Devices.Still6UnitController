@@ -1,2 +1,5 @@
 # Private secrets are in this file
 config.toml
+
+# Auto-generated version number
+version.txt
