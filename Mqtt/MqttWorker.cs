@@ -355,7 +355,7 @@ public class MqttWorker : BackgroundService
 
         var payload = new MessagePayload()
         { 
-            Model = component.Value.dtmi, 
+            Model = component.Value.dtmi.Split(":").Last(),
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             Seq = sequencenumber++,
             Metrics = telemetry_dict
