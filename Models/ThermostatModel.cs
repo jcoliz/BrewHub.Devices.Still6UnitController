@@ -33,7 +33,7 @@ public class ThermostatModel : IComponentModel
         public Telemetry(double target)
         {
             var dt = DateTimeOffset.UtcNow;
-            var phase = ((int)target) % 10;
+            var phase = ((int)target) % 16;
             Temperature = target + 20.0 * Math.Sin((double)(dt.Second + phase * 3) / 30.0 * Math.PI);
         }
 
@@ -62,6 +62,8 @@ public class ThermostatModel : IComponentModel
 
     private readonly MinMaxReportModel _minMaxReport = new MinMaxReportModel();
 
+    private int skew = 0;
+
     #endregion
 
     #region IComponentModel
@@ -79,7 +81,7 @@ public class ThermostatModel : IComponentModel
     object? IComponentModel.GetTelemetry()
     {
         // Take the reading
-        var reading = new Telemetry(TargetTemp);
+        var reading = new Telemetry(TargetTemp + (double)skew);
 
         // Update the minmaxreport
         var temp = reading.Temperature;
@@ -127,6 +129,11 @@ public class ThermostatModel : IComponentModel
     {
         if (values.ContainsKey("targetTemperature"))
             TargetTemp = Convert.ToDouble(values["targetTemperature"]);
+
+        if (values.ContainsKey("Skew"))
+        {
+            skew = values["Skew"].ToString().First() - '0';
+        }
     }
 
     /// <summary>

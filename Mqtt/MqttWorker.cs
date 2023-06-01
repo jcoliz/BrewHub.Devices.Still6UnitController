@@ -184,6 +184,16 @@ public class MqttWorker : BackgroundService
         {
             deviceid = _config["Provisioning:deviceid"] ?? System.Net.Dns.GetHostName();
 
+            // If we're running in docker...
+            if ( Boolean.Parse(_config["Provisioning:docker"] ?? "false") )
+            {
+                // We need the synthetic data to have some skew.
+
+                // We will tell the root level component to generate the skew,
+                // using the deviceid as the seed.
+                _model.SetInitialState(new Dictionary<string,string>() {{ "Skew", deviceid }});
+            }
+
             _logger.LogInformation(LogEvents.ProvisionOK,"Provisioning: OK. Device {id}", deviceid);
         }
         catch (Exception ex)

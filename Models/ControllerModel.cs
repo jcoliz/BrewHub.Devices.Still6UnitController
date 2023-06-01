@@ -170,6 +170,13 @@ public class ControllerModel : IRootModel
 
         if (values.ContainsKey("telemetryPeriod"))
             TelemetryPeriod = values["telemetryPeriod"];
+
+        if (values.ContainsKey("Skew"))
+        {
+            // Pass it along to the components generating synthetic data
+            Components["thermostat1"].SetInitialState(new Dictionary<string, string>() { { "Skew", values["Skew"] } });
+            Components["thermostat2"].SetInitialState(new Dictionary<string, string>() { { "Skew", values["Skew"] } });
+        }
     }
 
     /// <summary>
