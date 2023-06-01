@@ -12,7 +12,7 @@ foreach( $var in $vars.GetEnumerator() )
     }
 }
 
-$ModuleName = "tempcontroller"
+$ModuleName = "brewhub-controller"
 $ModuleVer = $(Get-Date -Format "yyyyMMdd-HHmmss")
 $ModuleTags = "${env:ACRSERVER}/${ModuleName}:local-$ModuleVer-amd64"
 $ModuleTags > obj\tags.txt
