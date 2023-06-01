@@ -404,7 +404,7 @@ public class MqttWorker : BackgroundService
             foreach(var kvp in _model.Components)
             {
                 // Obtain readings from this component
-                props = _model.GetProperties();
+                props = kvp.Value.GetProperties();
                 if (props is not null)
                 {
                     // Note that official PnP messages can only come from a single component at a time.
