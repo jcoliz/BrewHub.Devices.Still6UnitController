@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
-using BrewHub.Controller.Mqtt;
+using BrewHub.Platform;
+using BrewHub.Controllers;
 
 using IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((hostContext, services) =>

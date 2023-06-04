@@ -1,10 +1,12 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
-using BrewHub.Controller.Mqtt;
+using BrewHub.Platform;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml;
+
+namespace BrewHub.Controllers;
 
 /// <summary>
 /// Implementation for IoT Plug-and-play example temperature controller
@@ -23,12 +25,12 @@ public class ControllerModel : IRootModel
     // it's nice to be able to set it in config, and send down changes to it
 
     [JsonPropertyName("telemetryPeriod")]
-    public string TelemetryPeriod 
-    { 
+    public string TelemetryPeriod
+    {
         get
         {
             return XmlConvert.ToString(_TelemetryPeriod);
-        } 
+        }
         private set
         {
             _TelemetryPeriod = XmlConvert.ToTimeSpan(value);
@@ -50,7 +52,7 @@ public class ControllerModel : IRootModel
                 var ws = System.Diagnostics.Process.GetCurrentProcess().WorkingSet64;
 
                 // Convert to Kibibits
-                return (double)ws / (1024.0/8.0);
+                return (double)ws / (1024.0 / 8.0);
             }
         }
     }
@@ -95,8 +97,8 @@ public class ControllerModel : IRootModel
     [JsonIgnore]
     public IDictionary<string, IComponentModel> Components { get; } = new Dictionary<string, IComponentModel>()
     {
-        { 
-            "deviceInformation", 
+        {
+            "deviceInformation",
             new DeviceInformationModel()
         },
         {

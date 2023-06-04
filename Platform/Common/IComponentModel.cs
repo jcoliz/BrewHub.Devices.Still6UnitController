@@ -1,6 +1,6 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
-namespace BrewHub.Controller.Mqtt;
+namespace BrewHub.Platform;
 
 /// <summary>
 /// Implements a single IoT Plug-and-play model

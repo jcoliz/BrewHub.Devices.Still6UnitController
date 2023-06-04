@@ -10,7 +10,7 @@ using MQTTnet.Extensions.ManagedClient;
 using System.Reflection;
 using System.Text.Json;
 
-namespace BrewHub.Controller.Mqtt;
+namespace BrewHub.Platform;
 
 public record MessagePayload
 {

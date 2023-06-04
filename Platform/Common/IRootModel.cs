@@ -1,6 +1,6 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
-namespace BrewHub.Controller.Mqtt;
+namespace BrewHub.Platform;
 
 /// <summary>
 /// Implements the root-level "default" model in an IoT Plug-and-Play system

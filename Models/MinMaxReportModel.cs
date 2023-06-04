@@ -3,6 +3,8 @@
 
 using System.Text.Json.Serialization;
 
+namespace BrewHub.Controllers;
+
 /// <summary>
 /// Report showing statistics about temperatures over time
 /// </summary>
