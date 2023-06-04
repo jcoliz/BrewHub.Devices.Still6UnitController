@@ -36,6 +36,22 @@
                 "${workspaceFolder}/BrewHub.Controller.csproj"
             ],
             "problemMatcher": "$msCompile"
-        }
+        },
+        {
+            "label": "Set Module Tag",
+            "type": "shell",
+            "command": "./scripts/SetModuleTag.ps1",
+            "dependsOn": [
+                "build"
+            ]
+        },
+        {
+            "label": "BuildContainer",
+            "type": "shell",
+            "command": "./scripts/Build.ps1",
+            "dependsOn": [
+                "Set Module Tag"
+            ]
+        }        
     ]
 }
