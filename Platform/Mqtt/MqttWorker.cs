@@ -26,6 +26,8 @@ public class MqttWorker : BackgroundService
 
     private readonly IRootModel _model;
     private readonly ILogger<MqttWorker> _logger;
+    // Note that we need the entire config, because we have to pass unstructured
+    // InitialState properties to the model
     private readonly IConfiguration _config;
     private readonly IHostEnvironment _hostenv;
     private readonly IHostApplicationLifetime _lifetime;
