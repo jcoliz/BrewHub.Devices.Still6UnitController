@@ -8,9 +8,12 @@ if (Test-Path env:SOLUTION_VERSION)
     $Version = "$env:SOLUTION_VERSION"
 }
 else 
-{    
+{   
+    $User = $env:USERNAME
     $Commit = git describe --always
-    $Version = "local-$Commit"
+    $Time = $(Get-Date -Format "MMddHHmm")
+
+    $Version = "$Commit-$User-$Time"
 }
 
 Write-Output $Version
