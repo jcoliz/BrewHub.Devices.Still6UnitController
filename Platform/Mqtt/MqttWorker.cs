@@ -9,6 +9,8 @@ using MQTTnet.Client.Options;
 using MQTTnet.Client.Receiving;
 using MQTTnet.Extensions.ManagedClient;
 using System.Text.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace BrewHub.Devices.Platform.Mqtt;
 
@@ -29,6 +31,10 @@ public class MqttWorker : DeviceWorker
     private IManagedMqttClient? mqttClient;
     string deviceid = string.Empty;
     string basetopic = string.Empty;
+    private readonly JsonSerializerOptions _jsonoptions = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
     #endregion
 
     #region Constructor
@@ -233,7 +239,7 @@ public class MqttWorker : DeviceWorker
         
         // Create a dictionary of telemetry payload
 
-        var telemetry_json = JsonSerializer.Serialize(telemetry);
+        var telemetry_json = JsonSerializer.Serialize(telemetry,_jsonoptions);
         var telemetry_dict = JsonSerializer.Deserialize<Dictionary<string, object>>(telemetry_json);
         
         // Create a dictionary of message envelope
