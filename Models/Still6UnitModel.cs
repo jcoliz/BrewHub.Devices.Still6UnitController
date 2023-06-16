@@ -123,6 +123,10 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
     public IDictionary<string, IComponentModel> Components { get; } = new Dictionary<string, IComponentModel>()
     {
         {
+            "amb", // Ambient Environment
+            new TempHumidityModel()
+        },
+        {
             "rt", // Reflux Thermostat
             new ThermostatModelBH()
         },
