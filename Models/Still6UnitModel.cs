@@ -134,6 +134,14 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
             "ct", // Condenser Thermostat
             new ThermostatModelBH()
         },
+        {
+            "cv", // Condenser Valve
+            new BinaryValveModel()
+        },
+        {
+            "rv", // Reflux Valve
+            new BinaryValveModel()
+        },
     };
     #endregion
 
