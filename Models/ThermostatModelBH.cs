@@ -29,7 +29,7 @@ public class ThermostatModelBH : IComponentModel
     /// <summary>
     /// Correction value to apply for temperature readings
     /// </summary>
-    [JsonPropertyName("tCorr")]
+    [JsonPropertyName("tcorr")]
     public double TemperatureCurrection { get; private set; }
 
     /// <summary>
@@ -97,7 +97,7 @@ public class ThermostatModelBH : IComponentModel
     /// Identifier for the model implemented here
     /// </summary>
     [JsonIgnore]
-    public string dtmi => "dtmi:com:example:Thermostat;1";
+    public string dtmi => "dtmi:brewhub:controls:Thermostat;1";
 
     /// <summary>
     /// Get an object containing all current telemetry
