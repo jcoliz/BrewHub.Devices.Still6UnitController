@@ -9,23 +9,24 @@ using System.Xml;
 namespace BrewHub.Controllers;
 
 /// <summary>
-/// Implementation for IoT Plug-and-play example temperature controller
+/// Implementation for BrewHub 6-Unit Distillery Prototype v1
 /// </summary>
 /// <remarks>
-/// "dtmi:com:example:TemperatureController;2";
+/// "dtmi:brewhub:prototypes:still_6_unit;1";
 /// </remarks>
-public class ControllerModel : IRootModel
+public class Still6UnitModel : DeviceInformationModel, IRootModel
 {
-    #region Properties
+    #region Base Device Properties
 
-    [JsonPropertyName("serialNumber")]
     public string? SerialNumber { get; private set; } = "Unassigned";
 
     // Note that telemetry period is not strictly part of the DTMI. Still,
     // it's nice to be able to set it in config, and send down changes to it
 
-    [JsonPropertyName("telemetryPeriod")]
-    public string TelemetryPeriod
+    /// <summary>
+    /// How frequently to send telemetry
+    /// </summary>
+    public string TelemetryInterval
     {
         get
         {
@@ -38,13 +39,21 @@ public class ControllerModel : IRootModel
     }
     private TimeSpan _TelemetryPeriod = TimeSpan.Zero;
 
+    /// <summary>
+    /// Time this device was last started (UTC)
+    /// </summary>
+    public DateTimeOffset StartTimeUTC { get; } = DateTimeOffset.UtcNow;
+
     #endregion
 
     #region Telemetry
 
     public class Telemetry
     {
-        [JsonPropertyName("workingSet")]
+        /// <summary>
+        /// Current working set of the device memory in KiB
+        /// </summary>
+        [JsonPropertyName("WorkingSet")]
         public double WorkingSetKiB
         {
             get
@@ -55,13 +64,27 @@ public class ControllerModel : IRootModel
                 return (double)ws / (1024.0 / 8.0);
             }
         }
-    }
 
+        /// <summary>
+        /// Device status. Zero is OK, >0 increasing severity to 999
+        /// </summary>
+        public int Status { get; set; }
+
+        /// <summary>
+        /// Current CPU load (percent)
+        /// </summary>
+        public int CpuLoad { get; set; }
+    }
 
     #endregion
 
     #region Commands
 
+    /// <summary>
+    /// Reboots the device after waiting the specified time
+    /// </summary>
+    /// <param name="jsonparams">Delay to wait, in seconds</param>
+    /// <returns></returns>
     protected Task<object> Reboot(string jsonparams)
     {
         var delay = (jsonparams.Length > 0) ? JsonSerializer.Deserialize<int>(jsonparams) : 0;
@@ -80,7 +103,7 @@ public class ControllerModel : IRootModel
     /// <returns>String to identify the current model</returns>
     public override string ToString()
     {
-        return $"{DeviceInformation.Manufacturer} {DeviceInformation.DeviceModel} S/N:{SerialNumber} ver:{DeviceInformation.SoftwareVersion}";
+        return $"{base.Manufacturer} {base.DeviceModel} S/N:{SerialNumber} ver:{base.SoftwareVersion}";
     }
     #endregion
 
@@ -97,23 +120,10 @@ public class ControllerModel : IRootModel
     [JsonIgnore]
     public IDictionary<string, IComponentModel> Components { get; } = new Dictionary<string, IComponentModel>()
     {
-        {
-            "deviceInformation",
-            new DeviceInformationModel()
-        },
-        {
-            "thermostat1",
-            new ThermostatModel()
-        },
-        {
-            "thermostat2",
-            new ThermostatModel()
-        },
     };
     #endregion
 
     #region Internals
-    private DeviceInformationModel DeviceInformation => (Components["deviceInformation"] as DeviceInformationModel)!;
 
     #endregion
 
@@ -123,7 +133,7 @@ public class ControllerModel : IRootModel
     /// Identifier for this model
     /// </summary>
     [JsonIgnore]
-    public string dtmi => "dtmi:com:example:TemperatureController;2";
+    public string dtmi => "dtmi:brewhub:prototypes:still_6_unit;1";
 
     /// <summary>
     /// Get an object containing all current telemetry
@@ -146,7 +156,7 @@ public class ControllerModel : IRootModel
         if (key != "telemetryPeriod")
             throw new NotImplementedException($"Property {key} is not implemented on {dtmi}");
 
-        return TelemetryPeriod = System.Text.Json.JsonSerializer.Deserialize<string>(jsonvalue)!;
+        return TelemetryInterval = System.Text.Json.JsonSerializer.Deserialize<string>(jsonvalue)!;
     }
 
     /// <summary>
@@ -155,7 +165,7 @@ public class ControllerModel : IRootModel
     /// <returns>All known properties, and their current state</returns>
     object IComponentModel.GetProperties()
     {
-        return this as ControllerModel;
+        return this as Still6UnitModel;
     }
 
     /// <summary>
@@ -165,20 +175,21 @@ public class ControllerModel : IRootModel
     void IComponentModel.SetInitialState(IDictionary<string, string> values)
     {
         if (values.ContainsKey("Version"))
-            DeviceInformation.SoftwareVersion = values["Version"];
+            base.SoftwareVersion = values["Version"];
 
-        if (values.ContainsKey("serialNumber"))
-            SerialNumber = values["serialNumber"];
+        if (values.ContainsKey("SerialNumber"))
+            SerialNumber = values["SerialNumber"];
 
-        if (values.ContainsKey("telemetryPeriod"))
-            TelemetryPeriod = values["telemetryPeriod"];
+        if (values.ContainsKey("TelemetryPeriod"))
+            TelemetryInterval = values["TelemetryPeriod"];
 
         if (values.ContainsKey("Skew"))
         {
-            // Pass it along to the components generating synthetic data
-            Components["thermostat1"].SetInitialState(new Dictionary<string, string>() { { "Skew", values["Skew"] } });
-            Components["thermostat2"].SetInitialState(new Dictionary<string, string>() { { "Skew", values["Skew"] } });
+            // TODO: Pass it along to the components generating synthetic data
         }
+
+        // Pass along initial state to the base class
+        base.SetInitialState(values);
     }
 
     /// <summary>

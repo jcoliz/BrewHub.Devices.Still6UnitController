@@ -1,26 +1,18 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
+using BrewHub.Devices.Platform.Common;
 using MQTTnet;
 using MQTTnet.Client.Connecting;
 using MQTTnet.Client.Disconnecting;
 using MQTTnet.Client.Options;
 using MQTTnet.Client.Receiving;
 using MQTTnet.Extensions.ManagedClient;
-using System.Reflection;
 using System.Text.Json;
 
-namespace BrewHub.Platform;
+namespace BrewHub.Devices.Platform.Mqtt;
 
-public record MessagePayload
-{
-    public long Timestamp { get; init; }
-    public int Seq { get; init; }
-    public string? Model { get; init; }
-    public Dictionary<string, object>? Metrics { get; init; }
-}
-
-public class MqttWorker : BackgroundService
+public class MqttWorker : DeviceWorker
 {
 #region Injected Fields
 
@@ -38,13 +30,12 @@ public class MqttWorker : BackgroundService
     private IManagedMqttClient? mqttClient;
     string deviceid = string.Empty;
     string basetopic = string.Empty;
-    private DateTimeOffset NextPropertyUpdateTime = DateTimeOffset.MinValue;
-    private TimeSpan PropertyUpdatePeriod = TimeSpan.FromMinutes(1);
     private readonly TimeSpan TelemetryRetryPeriod = TimeSpan.FromMinutes(1);
     #endregion
 
     #region Constructor
-    public MqttWorker(ILogger<MqttWorker> logger, IRootModel model, IConfiguration config, IHostEnvironment hostenv, IHostApplicationLifetime lifetime)
+    public MqttWorker(ILogger<MqttWorker> logger, IRootModel model, IConfiguration config, IHostEnvironment hostenv, IHostApplicationLifetime lifetime): 
+        base(logger,model,config,hostenv,lifetime)
     {
         _logger = logger;
         _model = model;
@@ -54,122 +45,7 @@ public class MqttWorker : BackgroundService
     }
 #endregion
 
-#region Execute
-    /// <summary>
-    /// Do the work of this worker
-    /// </summary>
-    /// <param name="stoppingToken">Cancellation to indicate it's time stop</param>
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        try
-        {
-            var done = _config["run"] == "once";
-
-            _logger.LogInformation(LogEvents.ExecuteStartOK,"Started OK");
-
-            await LoadInitialState();
-
-            _logger.LogInformation(LogEvents.ExecuteDeviceInfo,"Device: {device}", _model);
-            _logger.LogInformation(LogEvents.ExecuteDeviceModel,"Model: {dtmi}", _model.dtmi);
-
-            await ProvisionDevice();
-            await OpenConnection();
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                await SendTelemetry();
-                await UpdateReportedProperties();
-
-                if (done)
-                    break;
-
-                await Task.Delay(_model.TelemetryPeriod > TimeSpan.Zero ? _model.TelemetryPeriod : TelemetryRetryPeriod, stoppingToken);
-            }
-
-            if (mqttClient is not null)
-            {
-                mqttClient.Dispose();
-            }
-        }
-        catch (TaskCanceledException)
-        {
-            _logger.LogInformation(LogEvents.ExecuteFinished,"IoTHub Device Worker: Stopped");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogCritical(LogEvents.ExecuteFailed,"IoTHub Device Worker: Failed {type} {message}", ex.GetType().Name, ex.Message);
-        }
-
-        await Task.Delay(500);
-        _lifetime.StopApplication();
-    }
-#endregion
-
 #region Startup
-    /// <summary>
-    /// Loads initial state of components out of config "InitialState" section
-    /// </summary>
-    /// <returns></returns>
-    protected Task LoadInitialState()
-    {
-        try
-        {
-            var initialstate = _config.GetSection("InitialState");
-            if (initialstate.Exists())
-            {
-                int numkeys = 0;
-                var root = initialstate.GetSection("Root");
-                if (root.Exists())
-                {
-                    var dictionary = root.GetChildren().ToDictionary(x => x.Key, x => x.Value ?? string.Empty);
-                    _model.SetInitialState(dictionary);
-                    numkeys += dictionary.Keys.Count;
-                }
-
-                foreach(var component in _model.Components)
-                {
-                    var section = initialstate.GetSection(component.Key);
-                    if (section.Exists())
-                    {
-                        var dictionary = section.GetChildren().ToDictionary(x => x.Key, x => x.Value ?? string.Empty);
-                        component.Value.SetInitialState(dictionary);
-                        numkeys += dictionary.Keys.Count;
-                    }
-                }
-
-                _logger.LogInformation(LogEvents.ConfigOK,"Initial State: OK Applied {numkeys} keys",numkeys);
-            }
-            else
-            {
-                _logger.LogWarning(LogEvents.ConfigNoExists,"Initial State: Not specified");
-            }
-
-            // We allow for the build system to inject a resource named "version.txt"
-            // which contains the software build version. If it's not here, we'll just
-            // continue with no version information.
-            var assembly = Assembly.GetAssembly(_model.GetType());
-            var resource = assembly!.GetManifestResourceNames().Where(x => x.EndsWith(".version.txt")).SingleOrDefault();
-            if (resource is not null)
-            {
-                using var stream = assembly.GetManifestResourceStream(resource);
-                using var streamreader = new StreamReader(stream!);
-                var version = streamreader.ReadLine();
-
-                // Where to store the software build version is solution-dependent.
-                // Thus, we will pass it in as a root-level "Version" initial state, and let the
-                // solution decide what to do with it.
-                _model.SetInitialState(new Dictionary<string,string>() {{ "Version", version! }});
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogCritical(LogEvents.ConfigFailed,"Initial State: Failed {message}", ex.Message);
-            throw;
-        }
-
-        return Task.CompletedTask;
-    }
-
-
     /// <summary>
     /// Provision this device according to the config supplied in "Provisioning" section
     /// </summary>
@@ -180,7 +56,7 @@ public class MqttWorker : BackgroundService
     /// (See examples for how this is done.)
     /// </remarks>
     /// <exception cref="ApplicationException">Thrown if provisioning fails (critical error)</exception>
-    protected Task ProvisionDevice()
+    protected override Task ProvisionDevice()
     {
         try
         {
@@ -211,7 +87,7 @@ public class MqttWorker : BackgroundService
     /// Open a connection to InfluxDB
     /// </summary>
     /// <exception cref="ApplicationException">Thrown if connection fails (critical error)</exception>
-    protected async Task OpenConnection()
+    protected async override Task OpenConnection()
     {
         string GetConfig(string key)
         {
@@ -283,7 +159,7 @@ public class MqttWorker : BackgroundService
     /// <summary>
     /// Send latest telemetry from root and all components
     /// </summary>
-    protected async Task SendTelemetry()
+    protected async override Task SendTelemetry()
     {
         try
         {
@@ -393,67 +269,35 @@ public class MqttWorker : BackgroundService
     /// <summary>
     ///  Send a separate message to update each component's properties
     /// </summary>
-    private async Task UpdateReportedProperties()
+    protected override async Task UpdateReportedProperties()
     {
-        try
+        // Get device properties
+        var props = _model.GetProperties();
+
+        // If properties exist
+        if (props is not null)
         {
-            if (DateTimeOffset.Now < NextPropertyUpdateTime)
-                return;
+            // We can just send them as a telemetry messages
+            // Right now telemetry and props messages are no different
+            await SendDataMessageAsync(props, new(string.Empty, _model));
+        }
 
-            // Get device properties
-            var props = _model.GetProperties();
+        // Send properties from components
 
-            // If properties exist
+        foreach(var kvp in _model.Components)
+        {
+            // Obtain readings from this component
+            props = kvp.Value.GetProperties();
             if (props is not null)
             {
-                // We can just send them as a telemetry messages
-                // Right now telemetry and props messages are no different
-                await SendDataMessageAsync(props, new(string.Empty, _model));
+                // Note that official PnP messages can only come from a single component at a time.
+                // This is a weakness that drives up the message count. So, will have to decide later
+                // if it's worth keeping this, or scrapping PnP compatibility and collecting them all
+                // into a single message.
+
+                // Send them
+                await SendDataMessageAsync(props, kvp);
             }
-
-            // Send properties from components
-
-            foreach(var kvp in _model.Components)
-            {
-                // Obtain readings from this component
-                props = kvp.Value.GetProperties();
-                if (props is not null)
-                {
-                    // Note that official PnP messages can only come from a single component at a time.
-                    // This is a weakness that drives up the message count. So, will have to decide later
-                    // if it's worth keeping this, or scrapping PnP compatibility and collecting them all
-                    // into a single message.
-
-                    // Send them
-                    await SendDataMessageAsync(props, kvp);
-                }
-            }
-
-            _logger.LogInformation(LogEvents.PropertyReportedOK,"Property: Reported OK. Next update after {delay}",PropertyUpdatePeriod);
-
-            // Manage back-off of property updates
-            NextPropertyUpdateTime = DateTimeOffset.Now + PropertyUpdatePeriod;
-            PropertyUpdatePeriod += PropertyUpdatePeriod;
-            TimeSpan oneday = TimeSpan.FromDays(1);
-            if (PropertyUpdatePeriod > oneday)
-                PropertyUpdatePeriod = oneday;
-        }
-        catch (ApplicationException ex)
-        {
-            // An application exception is a soft error. Don't need to log the whole exception,
-            // just give the message and move on
-            _logger.LogError(LogEvents.PropertyReportApplicationError,"Property: Application Error. {message}", ex.Message);
-        }
-        catch (AggregateException ex)
-        {
-            foreach (Exception exception in ex.InnerExceptions)
-            {
-                _logger.LogError(LogEvents.PropertyReportMultipleErrors, exception, "Property: Multiple reporting errors");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(LogEvents.PropertyReportSingleError,ex,"Property: Reporting error");
         }
     }
     #endregion
