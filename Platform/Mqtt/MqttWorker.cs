@@ -22,7 +22,6 @@ public class MqttWorker : DeviceWorker
     // InitialState properties to the model
     private readonly IConfiguration _config;
     private readonly IHostEnvironment _hostenv;
-    private readonly IHostApplicationLifetime _lifetime;
 
     #endregion
 
@@ -30,7 +29,6 @@ public class MqttWorker : DeviceWorker
     private IManagedMqttClient? mqttClient;
     string deviceid = string.Empty;
     string basetopic = string.Empty;
-    private readonly TimeSpan TelemetryRetryPeriod = TimeSpan.FromMinutes(1);
     #endregion
 
     #region Constructor
@@ -41,7 +39,6 @@ public class MqttWorker : DeviceWorker
         _model = model;
         _config = config;
         _hostenv = hostenv;
-        _lifetime = lifetime;
     }
 #endregion
 

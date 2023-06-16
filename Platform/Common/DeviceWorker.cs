@@ -25,7 +25,9 @@ public abstract class DeviceWorker : BackgroundService
     #region Fields
     private DateTimeOffset NextPropertyUpdateTime = DateTimeOffset.MinValue;
     private TimeSpan PropertyUpdatePeriod = TimeSpan.FromMinutes(1);
-    private readonly TimeSpan TelemetryRetryPeriod = TimeSpan.FromMinutes(1);
+    protected readonly TimeSpan TelemetryRetryPeriod = TimeSpan.FromMinutes(1);
+    private readonly TimeSpan MaxPropertyUpdateInterval = TimeSpan.FromMinutes(5);
+
     #endregion
 
     #region Constructor
@@ -211,9 +213,8 @@ public abstract class DeviceWorker : BackgroundService
             // Manage back-off of property updates
             NextPropertyUpdateTime = DateTimeOffset.Now + PropertyUpdatePeriod;
             PropertyUpdatePeriod += PropertyUpdatePeriod;
-            TimeSpan oneday = TimeSpan.FromDays(1);
-            if (PropertyUpdatePeriod > oneday)
-                PropertyUpdatePeriod = oneday;
+            if (PropertyUpdatePeriod > MaxPropertyUpdateInterval)
+                PropertyUpdatePeriod = MaxPropertyUpdateInterval;
         }
         catch (ApplicationException ex)
         {
