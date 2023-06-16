@@ -73,7 +73,7 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
         /// <summary>
         /// Current CPU load (percent)
         /// </summary>
-        public int CpuLoad { get; set; }
+        public int? CpuLoad { get; set; }
     }
 
     #endregion
@@ -124,6 +124,17 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
     #endregion
 
     #region Internals
+
+    /// <summary>
+    /// Take a measurement of the CpuLoad
+    /// </summary>
+    /// <remarks>
+    /// This must be done with a delay. However, no one can wait for this. So it works in the background,
+    /// and updates the cpu load asynchronously.
+    /// </remarks>
+    private async void MeasureCpuLoad()
+    {
+    }
 
     #endregion
 
