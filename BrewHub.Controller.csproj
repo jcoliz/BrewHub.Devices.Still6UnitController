@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Alexinea.Extensions.Configuration.Toml" Version="7.0.0" />
+    <PackageReference Include="system.diagnostics.performancecounter" Version="7.0.0" />
     <PackageReference Include="Tomlyn" Version="0.16.2" />
     <PackageReference Include="MQTTnet" Version="3.0.16" />
     <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="3.0.16" />
@@ -23,7 +24,7 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="pwsh --command &quot; &amp;&apos;$(ProjectDir)scripts\Get-Version.ps1&apos; &gt; &apos;$(ProjectDir)version.txt&apos; &quot;" />
+    <Exec Command="pwsh --command &quot; &amp;'$(ProjectDir)scripts\Get-Version.ps1' &gt; '$(ProjectDir)version.txt' &quot;" />
   </Target>
 
   <ItemGroup>

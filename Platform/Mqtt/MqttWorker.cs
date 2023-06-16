@@ -9,7 +9,6 @@ using MQTTnet.Client.Options;
 using MQTTnet.Client.Receiving;
 using MQTTnet.Extensions.ManagedClient;
 using System.Text.Json;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace BrewHub.Devices.Platform.Mqtt;

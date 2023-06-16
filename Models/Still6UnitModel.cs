@@ -5,6 +5,8 @@ using BrewHub.Devices.Platform.Common;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace BrewHub.Controllers;
 
@@ -73,7 +75,7 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
         /// <summary>
         /// Current CPU load (percent)
         /// </summary>
-        public int? CpuLoad { get; set; }
+        public double? CpuLoad { get; set; }
     }
 
     #endregion
@@ -125,15 +127,20 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
 
     #region Internals
 
-    /// <summary>
-    /// Take a measurement of the CpuLoad
-    /// </summary>
-    /// <remarks>
-    /// This must be done with a delay. However, no one can wait for this. So it works in the background,
-    /// and updates the cpu load asynchronously.
-    /// </remarks>
-    private async void MeasureCpuLoad()
+    protected readonly PerformanceCounter? _cpuCounter;
+
+    public Still6UnitModel()
     {
+        // TODO: Get working also on Linux
+        //https://github.com/dotnet/orleans/blob/3.x/src/TelemetryConsumers/Orleans.TelemetryConsumers.Linux/LinuxEnvironmentStatistics.cs
+
+        if ( RuntimeInformation.IsOSPlatform(OSPlatform.Windows) )
+        {
+            _cpuCounter = new PerformanceCounter();
+            _cpuCounter.CategoryName = "Processor";
+            _cpuCounter.CounterName = "% Processor Time";
+            _cpuCounter.InstanceName = "_Total";
+        }
     }
 
     #endregion
@@ -152,8 +159,16 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
     /// <returns>All telemetry we wish to send at this time, or null for don't send any</returns>
     object? IComponentModel.GetTelemetry()
     {
+        var reading = new Telemetry();
+
+        //https://github.com/dotnet/orleans/blob/3.x/src/TelemetryConsumers/Orleans.TelemetryConsumers.Linux/LinuxEnvironmentStatistics.cs
+        #pragma warning disable CA1416
+        if (_cpuCounter is not null)
+            reading.CpuLoad = _cpuCounter.NextValue();
+        #pragma warning restore CA1416
+
         // Take the reading, return it
-        return new Telemetry();
+        return reading;
     }
 
     /// <summary>
@@ -201,6 +216,7 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
 
         // Pass along initial state to the base class
         base.SetInitialState(values);
+
     }
 
     /// <summary>
