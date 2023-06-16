@@ -10,6 +10,7 @@ using MQTTnet.Client.Receiving;
 using MQTTnet.Extensions.ManagedClient;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace BrewHub.Devices.Platform.Mqtt;
 
@@ -34,6 +35,7 @@ public class MqttWorker : DeviceWorker
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
+    private readonly Regex _dtmiStrippingRegex = new Regex("^dtmi:(.+)");
     #endregion
 
     #region Constructor
@@ -245,7 +247,7 @@ public class MqttWorker : DeviceWorker
 
         var payload = new MessagePayload()
         { 
-            Model = component.Value.dtmi.Split(":").Last(),
+            Model = component.Value.dtmi,
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             Seq = sequencenumber++,
             Metrics = telemetry_dict

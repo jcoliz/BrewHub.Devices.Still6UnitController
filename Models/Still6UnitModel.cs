@@ -122,6 +122,14 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
     [JsonIgnore]
     public IDictionary<string, IComponentModel> Components { get; } = new Dictionary<string, IComponentModel>()
     {
+        {
+            "rt", // Reflux Thermostat
+            new ThermostatModelBH()
+        },
+        {
+            "ct", // Condenser Thermostat
+            new ThermostatModelBH()
+        },
     };
     #endregion
 
@@ -179,10 +187,10 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
     /// <returns>The unserialized new value of the property</returns>
     object IComponentModel.SetProperty(string key, string jsonvalue)
     {
-        if (key != "telemetryPeriod")
+        if (key != "TelemetryInterval")
             throw new NotImplementedException($"Property {key} is not implemented on {dtmi}");
 
-        return TelemetryInterval = System.Text.Json.JsonSerializer.Deserialize<string>(jsonvalue)!;
+        return TelemetryInterval = JsonSerializer.Deserialize<string>(jsonvalue)!;
     }
 
     /// <summary>
@@ -216,7 +224,6 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
 
         // Pass along initial state to the base class
         base.SetInitialState(values);
-
     }
 
     /// <summary>
