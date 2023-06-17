@@ -135,7 +135,7 @@ public class MqttWorker : DeviceWorker
         catch (Exception ex)
         {
             _logger.LogCritical(LogEvents.ConnectFailed,"Connection: Failed {message}", ex.Message);
-            throw new ApplicationException("Connection to IoT Hub failed", ex);
+            throw new ApplicationException("Connection to MQTT Broker failed", ex);
         }
     }
 
@@ -146,12 +146,19 @@ public class MqttWorker : DeviceWorker
 
     private void OnConnectingFailed(ManagedProcessFailedEventArgs obj)
     {
-        _logger.LogError(LogEvents.ConnectFailed,"Connection: Failed.");
+        _logger.LogError(LogEvents.ConnectFailed, obj.Exception, "Connection: Failed.");
     }
 
     private void OnDisconnected(MqttClientDisconnectedEventArgs obj)
     {
-        _logger.LogError(LogEvents.ConnectDisconnectedError,"Connection: Error, Disconnected. {type} {message}", obj.Exception.GetType().Name, obj.Exception.Message);
+        _logger
+            .LogError(
+                LogEvents.ConnectDisconnectedError,
+                "Connection: Error, Disconnected. {Reason} {was} {type} {message}", 
+                obj.Reason, 
+                obj.ClientWasConnected,
+                obj.Exception?.GetType().Name ?? "(null)", obj.Exception?.Message ?? "(null)"
+            );
     }
 
     #endregion
