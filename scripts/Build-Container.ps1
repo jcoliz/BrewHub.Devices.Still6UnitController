@@ -17,5 +17,5 @@ $ModuleVer = ./scripts/Get-Version.ps1
 $ModuleTags = "${env:ACRSERVER}/${ModuleName}:$ModuleVer-amd64"
 $ModuleTagsLocal = "${ModuleName}:local"
 
-Invoke-Expression "docker build --rm --build-arg SOLUTION_VERSION=$ModuleVer -f .\docker\Dockerfile.amd64 -t $ModuleTags -t $ModuleTagsLocal ." -ErrorAction Stop
+Invoke-Expression "docker build --rm --build-arg SOLUTION_VERSION=$ModuleVer -f .\docker\Dockerfile -t $ModuleTags -t $ModuleTagsLocal ." -ErrorAction Stop
 

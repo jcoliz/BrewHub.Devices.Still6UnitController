@@ -10,7 +10,7 @@ RUN dotnet restore
 ARG SOLUTION_VERSION=docker
 
 COPY . ./
-RUN rm config.toml
+RUN rm -f config.toml || true
 RUN dotnet publish -c Release -o out
 
 FROM mcr.microsoft.com/dotnet/runtime:7.0
