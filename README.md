@@ -8,10 +8,10 @@ More details: [BrewHub.Edge](https://github.com/jcoliz/BrewHub.Edge)
 
 ## What's Here: Six-Unit Distillery Prototype
 
-The Six-Unit Distillery is a prototype implementation to demonstrate the BrewHub.Net IoT Reference Architecture across the device, edge, cloud, and web stacks. This repository contains the device control software for the "Six Unit Distillery" reference implementation.
+The Six-Unit Distillery is a prototype implementation to demonstrate the BrewHub.Net IoT Reference Architecture across the device, edge, cloud, and web stacks. This repository contains the device control software for the prototype.
 
-Originally designed for a spirits distiller, the prototype presents a simplified version of the industrial continuous distillation
-equipment illustrated above. While there are **nineteen** sensors an actuators on the full version, this scaled-down prototype 
+Originally created for a spirits distiller, the prototype presents a simplified version of the industrial continuous distillation
+equipment illustrated above. While there are **nineteen** components on the full version, this scaled-down prototype 
 works the same way, it's just easier to explain.
 
 We use the term "six-unit" here to refer to the components of the device model which is surfaced on the dashboard. Those units here are:
@@ -26,7 +26,7 @@ We use the term "six-unit" here to refer to the components of the device model w
 ## Getting Started
 
 The fastest way to get started is bring up an instance of the [BrewHub.Net Edge Stack](https://github.com/jcoliz/BrewHub.Edge),
-and include the optional controllers to generate synthetic data. Those controllers are instances of the Six-Unit Distillery device controller in a container. Of course, device software doesn't run in a container in a real system, however this will get a demo
+while including the optional controllers to generate synthetic data. Those controllers are instances of the Six-Unit Distillery device controller in a container. Of course, device software doesn't run in a container in a real system, however this will get a demo
 up and running quickly.
 
 ```
@@ -37,9 +37,9 @@ $ docker compose -f docker-compose.yml -f docker-compose-controllers.yml up -d
 
 ## Building Locally
 
-This controller is build on .NET 7.0. To build it, you'll need the [.NET SDK](https://dotnet.microsoft.com/en-us/download) installed on your machine.
+The controller is build on .NET 7.0. To build it, you'll need the [.NET SDK](https://dotnet.microsoft.com/en-us/download) installed on your machine.
 
-You will need to tell the controller where to look for an MQTT broker, and (optionally) what to use as a deviceid (client id) when connecting. You can use any supported .NET configuration method, or you can create a `config.toml` file in the project root:
+It needs to know where to look for an MQTT broker, and (optionally) what to use as a deviceid (client id) when connecting. You can use any supported .NET configuration method, or you can create a `config.toml` file in the project root:
 
 ```toml
 [mqtt]
@@ -71,4 +71,4 @@ This controller ultimately will connect to physical sensors to send true data. I
 
 ## Running on Microcontrollers
 
-The BrewHub.Net stack requires very little resources. As a future project, I'll demonstrate running this on an Espressif MCU-based device. Stay tuned!
+The BrewHub.Net stack requires very few resources. As a future project, I'll demonstrate running this on an Espressif MCU-based device. Stay tuned!
