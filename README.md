@@ -2,6 +2,8 @@
 
 BrewHub.Net is an IoT reference architecture using .NET-based device software, InfluxDB and Grafana on a multi-node edge cluster, connected to Azure Services on the backend, with a Vue.JS dashboard for user monitoring and control.
 
+More details: [BrewHub.Edge](https://github.com/jcoliz/BrewHub.Edge)
+
 ![Distillery](docs/images/feature.png)
 
 ## What's Here: Six-Unit Distillery Prototype
