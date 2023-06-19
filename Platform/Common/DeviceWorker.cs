@@ -31,9 +31,10 @@ public abstract class DeviceWorker : BackgroundService
     #endregion
 
     #region Constructor
-    public DeviceWorker(ILogger logger, IRootModel model, IConfiguration config, IHostEnvironment hostenv, IHostApplicationLifetime lifetime)
+    public DeviceWorker(ILoggerFactory logfact, IRootModel model, IConfiguration config, IHostEnvironment hostenv, IHostApplicationLifetime lifetime)
     {
-        _logger = logger;
+        // For more compact logs, only use the class name itself, NOT fully-qualified class name
+        _logger = logfact.CreateLogger(nameof(DeviceWorker));
         _model = model;
         _config = config;
         _hostenv = hostenv;

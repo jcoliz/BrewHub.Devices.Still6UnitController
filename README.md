@@ -53,14 +53,14 @@ Once you're configured, simply `dotnet run` to get started.
 
 ```
 $ dotnet run
-<6> [ 17/06/2023 19:18:08 ] BrewHub.Devices.Platform.Mqtt.MqttWorker[100] Started OK
-<6> [ 17/06/2023 19:18:08 ] BrewHub.Devices.Platform.Mqtt.MqttWorker[200] Initial State: OK Applied 9 keys
-<6> [ 17/06/2023 19:18:08 ] BrewHub.Devices.Platform.Mqtt.MqttWorker[101] Device: BrewHub 6-Unit Distillery Prototype v1 S/N:1234567890-ABCDEF ver:0.0.0-JamesColiz-06171918
-<6> [ 17/06/2023 19:18:08 ] BrewHub.Devices.Platform.Mqtt.MqttWorker[102] Model: dtmi:brewhub:prototypes:still_6_unit;1
-<6> [ 17/06/2023 19:18:08 ] BrewHub.Devices.Platform.Mqtt.MqttWorker[300] Provisioning: OK. Device your-device-name
-<6> [ 17/06/2023 19:18:08 ] BrewHub.Devices.Platform.Mqtt.MqttWorker[400] Connection: OK.
-<6> [ 17/06/2023 19:18:09 ] BrewHub.Devices.Platform.Mqtt.MqttWorker[500] Telemetry: OK 4 messages
-<6> [ 17/06/2023 19:18:09 ] BrewHub.Devices.Platform.Mqtt.MqttWorker[720] Property: Reported OK. Next update after 00:01:00
+<6> [ 17/06/2023 19:18:08 ] MqttWorker[100] Started OK
+<6> [ 17/06/2023 19:18:08 ] MqttWorker[200] Initial State: OK Applied 9 keys
+<6> [ 17/06/2023 19:18:08 ] MqttWorker[101] Device: BrewHub 6-Unit Distillery Prototype v1 S/N:1234567890-ABCDEF ver:0.0.0
+<6> [ 17/06/2023 19:18:08 ] MqttWorker[102] Model: dtmi:brewhub:prototypes:still_6_unit;1
+<6> [ 17/06/2023 19:18:08 ] MqttWorker[300] Provisioning: OK. Device your-device-name
+<6> [ 17/06/2023 19:18:08 ] MqttWorker[400] Connection: OK.
+<6> [ 17/06/2023 19:18:09 ] MqttWorker[500] Telemetry: OK 4 messages
+<6> [ 17/06/2023 19:18:09 ] MqttWorker[720] Property: Reported OK. Next update after 00:01:00
 ```
 
 Open up the dashboard on `http://localhost:80`, and you'll soon see `your-device-name` show up with its new data.

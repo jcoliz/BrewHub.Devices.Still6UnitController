@@ -19,7 +19,7 @@ public class MqttWorker : DeviceWorker
 #region Injected Fields
 
     private readonly IRootModel _model;
-    private readonly ILogger<MqttWorker> _logger;
+    private readonly ILogger _logger;
     // Note that we need the entire config, because we have to pass unstructured
     // InitialState properties to the model
     private readonly IConfiguration _config;
@@ -39,10 +39,11 @@ public class MqttWorker : DeviceWorker
     #endregion
 
     #region Constructor
-    public MqttWorker(ILogger<MqttWorker> logger, IRootModel model, IConfiguration config, IHostEnvironment hostenv, IHostApplicationLifetime lifetime): 
-        base(logger,model,config,hostenv,lifetime)
+    public MqttWorker(ILoggerFactory logfact, IRootModel model, IConfiguration config, IHostEnvironment hostenv, IHostApplicationLifetime lifetime): 
+        base(logfact,model,config,hostenv,lifetime)
     {
-        _logger = logger;
+        // For more compact logs, only use the class name itself, NOT fully-qualified class name
+        _logger = logfact.CreateLogger(nameof(MqttWorker));
         _model = model;
         _config = config;
         _hostenv = hostenv;
