@@ -89,7 +89,7 @@ public class MqttWorker : DeviceWorker
     }
 
     /// <summary>
-    /// Open a connection to InfluxDB
+    /// Open a connection to MQTT broker
     /// </summary>
     /// <exception cref="ApplicationException">Thrown if connection fails (critical error)</exception>
     protected async override Task OpenConnection()
@@ -126,7 +126,7 @@ public class MqttWorker : DeviceWorker
             mqttClient.ConnectingFailedHandler = new ConnectingFailedHandlerDelegate(OnConnectingFailed);
 
             mqttClient.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(a => {
-                _logger.LogInformation("Message recieved: {payload}", System.Text.Encoding.UTF8.GetString(a.ApplicationMessage.Payload));
+                _logger.LogInformation("Message recieved: {topic} {payload}", a.ApplicationMessage.Topic, System.Text.Encoding.UTF8.GetString(a.ApplicationMessage.Payload));
             });
 
             await mqttClient.StartAsync(options);
@@ -143,6 +143,8 @@ public class MqttWorker : DeviceWorker
     private void OnConnected(MqttClientConnectedEventArgs obj)
     {
         _logger.LogInformation(LogEvents.ConnectOK,"Connection: OK.");
+
+        mqttClient.SubscribeAsync($"brewhub;1/none/NCMD/Beach-6/#");
     }
 
     private void OnConnectingFailed(ManagedProcessFailedEventArgs obj)
@@ -181,6 +183,13 @@ public class MqttWorker : DeviceWorker
 
             if (_model.TelemetryPeriod > TimeSpan.Zero)
             {
+                if (!mqttClient!.IsConnected)
+                {
+                    // MqttNotConnectedNotSent
+                    _logger.LogWarning(LogEvents.MqttNotConnectedTelemetryNotSent,"MQTT: Client not connected. Telemetry not sent.");
+                    return;
+                }
+
                 // Obtain readings from the root
                 var readings = _model.GetTelemetry();
 
@@ -273,16 +282,26 @@ public class MqttWorker : DeviceWorker
         await mqttClient!.PublishAsync(message, CancellationToken.None); // Since 3.0.5 with CancellationToken
 
         // Log about it
-        _logger.LogDebug(LogEvents.DataMessageSent,"Message: Sent {topic} {message}", topic, json);
+        _logger.LogDebug(LogEvents.MqttDataMessageSent,"MQTT: Sent {topic} {message}", topic, json);
     }
 #endregion
 
 #region Properties
-    /// <summary>
+    /// <summary> 
     ///  Send a separate message to update each component's properties
     /// </summary>
     protected override async Task UpdateReportedProperties()
     {
+        if (!mqttClient!.IsConnected)
+        {
+            // MqttNotConnectedNotSent
+            _logger.LogWarning(LogEvents.MqttNotConnectedPropertyNotSent,"MQTT: Client not connected. Properties not sent.");
+
+            // TODO: Need a better way to communicate upward that we did not send props, but it's not an error
+            // condition. In fact it's not even really worthy of a warning.
+            throw new ApplicationException("Not connected");
+        }
+
         // Get device properties
         var props = _model.GetProperties();
 

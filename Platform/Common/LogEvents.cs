@@ -49,7 +49,6 @@ public class LogEvents
     public const int TelemetryOK                = 500;
     public const int TelemetrySentOne           = 501;
     public const int TelemetrySentRoot          = 502;
-    public const int DataMessageSent            = 503;
     public const int TelemetryNotSent           = 577;
     public const int TelemetryNoPeriod          = 578;
     public const int TelemetrySingleError       = 687;
@@ -74,4 +73,10 @@ public class LogEvents
     public const int PropertyUpdateError        = 786;
     public const int PropertyUpdateSingleError  = 787;
     public const int PropertyUpdateMultipleErrors = 788;
+
+
+    public const int MqttDataMessageSent   = 1003;
+    public const int MqttNotConnectedTelemetryNotSent = 1071;
+    public const int MqttNotConnectedPropertyNotSent = 1072;
+
 }
