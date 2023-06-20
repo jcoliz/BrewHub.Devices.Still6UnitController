@@ -143,7 +143,7 @@ public class MqttWorker : DeviceWorker
             if (!mqttClient.IsConnected)
                 throw new ApplicationException("Timeout attempting to connect");
 
-            await mqttClient.SubscribeAsync($"brewhub;1/none/NCMD/Beach-6/#");
+            await mqttClient.SubscribeAsync($"brewhub;1/none/NCMD/{deviceid}/#");
         }
         catch (Exception ex)
         {
