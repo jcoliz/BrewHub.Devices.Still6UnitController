@@ -124,10 +124,7 @@ public class MqttWorker : DeviceWorker
             mqttClient.ConnectedHandler = new MqttClientConnectedHandlerDelegate(OnConnected);
             mqttClient.DisconnectedHandler = new MqttClientDisconnectedHandlerDelegate(OnDisconnected);            
             mqttClient.ConnectingFailedHandler = new ConnectingFailedHandlerDelegate(OnConnectingFailed);
-
-            mqttClient.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(a => {
-                _logger.LogInformation("Message recieved: {topic} {payload}", a.ApplicationMessage.Topic, System.Text.Encoding.UTF8.GetString(a.ApplicationMessage.Payload));
-            });
+            mqttClient.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(OnMessageReceived);
 
             await mqttClient.StartAsync(options);
 
@@ -162,6 +159,67 @@ public class MqttWorker : DeviceWorker
                 obj.ClientWasConnected,
                 obj.Exception?.GetType().Name ?? "(null)", obj.Exception?.Message ?? "(null)"
             );
+    }
+
+    private static readonly Regex componentfromtopic = new Regex("^((.+?)/){4}(?<component>.+)$");
+
+    private async void OnMessageReceived(MqttApplicationMessageReceivedEventArgs obj)
+    {
+        try
+        {
+            var topic = obj.ApplicationMessage.Topic;
+            var json = System.Text.Encoding.UTF8.GetString(obj.ApplicationMessage.Payload);
+            _logger.LogDebug(LogEvents.PropertyRequest,"Message recieved: {topic} {payload}", topic, json);
+
+            // TODO: See OnDesiredPropertiesUpdate in AzDevice.IoTHubWorker
+
+            // Was this sent to a component or to the device?
+            var match = componentfromtopic.Match(topic);
+            var component = match.Success ? match.Groups["component"].Value : null;
+
+            // Break out the metric and value
+            var message = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+
+            foreach (var kvp in message!)
+            {
+                var fullpropname = (string.IsNullOrEmpty(component)) ? kvp.Key : $"{component}/{kvp.Key}";
+                try
+                {
+                    if (string.IsNullOrEmpty(component))
+                    {
+                        _model.SetProperty(kvp.Key, kvp.Value);
+                    }
+                    else
+                    {
+                        _model.Components[component].SetProperty(kvp.Key, kvp.Value);
+                    }
+                    _logger.LogInformation(LogEvents.PropertyUpdateOK, "Property: OK. Updated {property} to {updated}", fullpropname, kvp.Value);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(LogEvents.PropertyUpdateError, ex, "Property: Update error for {property}", fullpropname);
+                }
+            }
+
+            // Send it to the component
+
+            // Send back the ACK
+            // The easiest way to do this right now is just trigger an update with ALL
+            // the properties. Someday we will improve this to only send the changed
+            // properties, which will make this more efficient
+            await UpdateReportedProperties();
+        }
+        catch (AggregateException ex)
+        {
+            foreach (Exception exception in ex.InnerExceptions)
+            {
+                _logger.LogError(LogEvents.PropertyUpdateMultipleErrors, exception, "Property: Multiple update errors");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(LogEvents.PropertyUpdateSingleError,ex,"Property: Update error");
+        }
     }
 
     #endregion

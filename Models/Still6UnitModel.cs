@@ -202,7 +202,9 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
         if (key != "TelemetryInterval")
             throw new NotImplementedException($"Property {key} is not implemented on {dtmi}");
 
-        return TelemetryInterval = JsonSerializer.Deserialize<string>(jsonvalue)!;
+        // Bug 1608: Json type mismatch sending desired properties
+        //return TelemetryInterval = JsonSerializer.Deserialize<string>(jsonvalue)!;
+        return TelemetryInterval = jsonvalue;
     }
 
     /// <summary>
