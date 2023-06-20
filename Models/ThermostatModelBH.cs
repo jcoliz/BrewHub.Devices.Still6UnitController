@@ -123,13 +123,10 @@ public class ThermostatModelBH : IComponentModel
             return TemperatureCurrection = Convert.ToDouble(jsonvalue);
         if (key == "targetTemp")
             return TargetTemperature = Convert.ToDouble(jsonvalue);
-
-        // Bug 1608: Json type mismatch sending desired properties
-
         if (key == "targetComp")
-            return TargetComponent = jsonvalue; // JsonSerializer.Deserialize<string>(jsonvalue)!;
+            return TargetComponent = JsonSerializer.Deserialize<string>(jsonvalue)!;
         if (key == "cComp")
-            return ControlComponent =  jsonvalue; // JsonSerializer.Deserialize<string>(jsonvalue)!;
+            return ControlComponent =  JsonSerializer.Deserialize<string>(jsonvalue)!;
 
         throw new NotImplementedException($"Property {key} is not implemented on {dtmi}");
     }

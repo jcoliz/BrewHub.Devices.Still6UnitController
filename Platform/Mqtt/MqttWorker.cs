@@ -178,20 +178,23 @@ public class MqttWorker : DeviceWorker
             var component = match.Success ? match.Groups["component"].Value : null;
 
             // Break out the metric and value
-            var message = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+            var message = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
 
             foreach (var kvp in message!)
             {
                 var fullpropname = (string.IsNullOrEmpty(component)) ? kvp.Key : $"{component}/{kvp.Key}";
                 try
                 {
+                    // Models expect a string THAT they will deserialize on their side :P
+                    var jsonvalue = JsonSerializer.Serialize(kvp.Value);
+
                     if (string.IsNullOrEmpty(component))
                     {
-                        _model.SetProperty(kvp.Key, kvp.Value);
+                        _model.SetProperty(kvp.Key, jsonvalue);
                     }
                     else
                     {
-                        _model.Components[component].SetProperty(kvp.Key, kvp.Value);
+                        _model.Components[component].SetProperty(kvp.Key, jsonvalue);
                     }
                     _logger.LogInformation(LogEvents.PropertyUpdateOK, "Property: OK. Updated {property} to {updated}", fullpropname, kvp.Value);
                 }
