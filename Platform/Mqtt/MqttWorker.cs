@@ -129,6 +129,21 @@ public class MqttWorker : DeviceWorker
             await mqttClient.StartAsync(options);
 
             _logger.LogDebug(LogEvents.Connecting,"Connection: Connecting on {server}:{port}",server,port);
+
+            // Wait here until connected.
+            // Bug 1609: MQTT on controller should not show warnings when metrics not sent because not connected yet
+
+            var now = DateTimeOffset.Now;
+            var timeout = now + TimeSpan.FromMinutes(3);
+            while (!mqttClient.IsConnected && DateTimeOffset.Now < timeout)
+            {
+                _logger.LogDebug(LogEvents.MqttConnectingWaiting,"Connection: Waiting for connection");
+                await Task.Delay(TimeSpan.FromMilliseconds(500));
+            }
+            if (!mqttClient.IsConnected)
+                throw new ApplicationException("Timeout attempting to connect");
+
+            await mqttClient.SubscribeAsync($"brewhub;1/none/NCMD/Beach-6/#");
         }
         catch (Exception ex)
         {
@@ -139,9 +154,7 @@ public class MqttWorker : DeviceWorker
 
     private void OnConnected(MqttClientConnectedEventArgs obj)
     {
-        _logger.LogInformation(LogEvents.ConnectOK,"Connection: OK.");
-
-        mqttClient.SubscribeAsync($"brewhub;1/none/NCMD/Beach-6/#");
+        _logger.LogInformation(LogEvents.ConnectOK,"Connection: OK.");        
     }
 
     private void OnConnectingFailed(ManagedProcessFailedEventArgs obj)
@@ -171,8 +184,6 @@ public class MqttWorker : DeviceWorker
             var json = System.Text.Encoding.UTF8.GetString(obj.ApplicationMessage.Payload);
             _logger.LogDebug(LogEvents.PropertyRequest,"Message recieved: {topic} {payload}", topic, json);
 
-            // TODO: See OnDesiredPropertiesUpdate in AzDevice.IoTHubWorker
-
             // Was this sent to a component or to the device?
             var match = componentfromtopic.Match(topic);
             var component = match.Success ? match.Groups["component"].Value : null;
@@ -187,6 +198,7 @@ public class MqttWorker : DeviceWorker
                 {
                     // Models expect a string THAT they will deserialize on their side :P
                     var jsonvalue = JsonSerializer.Serialize(kvp.Value);
+                    var jv1 = kvp.Value.ToString();
 
                     if (string.IsNullOrEmpty(component))
                     {

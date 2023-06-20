@@ -76,6 +76,8 @@ public class LogEvents
 
 
     public const int MqttDataMessageSent   = 1003;
+    public const int MqttConnectingWaiting  = 1402;
+
     public const int MqttNotConnectedTelemetryNotSent = 1071;
     public const int MqttNotConnectedPropertyNotSent = 1072;
 
