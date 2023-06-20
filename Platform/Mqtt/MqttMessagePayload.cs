@@ -4,8 +4,9 @@
 namespace BrewHub.Devices.Platform.Mqtt;
 public record MessagePayload
 {
+    private static int NextSeq = 1;
     public long Timestamp { get; init; }
-    public int Seq { get; init; }
+    public int Seq { get; init; } = NextSeq++;
     public string? Model { get; init; }
     public Dictionary<string, object>? Metrics { get; init; }
 }

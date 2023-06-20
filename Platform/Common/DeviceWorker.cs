@@ -6,6 +6,12 @@ using System.Reflection;
 
 namespace BrewHub.Devices.Platform.Common;
 
+/// <summary>
+/// Common device worker for connecting to an IoT Service
+/// </summary>
+/// <remarks>
+/// Override with specific connection and transmission details
+/// </remarks>
 public abstract class DeviceWorker : BackgroundService
 {
 #region Injected Fields

@@ -189,9 +189,24 @@ public class MqttWorker : DeviceWorker
             var component = match.Success ? match.Groups["component"].Value : null;
 
             // Break out the metric and value
-            var message = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
 
-            foreach (var kvp in message!)
+            // NOTE: For near-term backward compat, the payload could EITHER be a Mqtt.MessagePayload,
+            // OR just a dictionary of string/objects
+            Dictionary<string, object> message;
+            try
+            {
+                var payload = JsonSerializer.Deserialize<MessagePayload>(json);
+                if (payload is not null)
+                    message = payload.Metrics!;
+                else
+                    message = JsonSerializer.Deserialize<Dictionary<string, object>>(json)!;
+            }
+            catch
+            {
+                message = JsonSerializer.Deserialize<Dictionary<string, object>>(json)!;
+            }
+
+            foreach (var kvp in message)
             {
                 var fullpropname = (string.IsNullOrEmpty(component)) ? kvp.Key : $"{component}/{kvp.Key}";
                 try
@@ -314,8 +329,6 @@ public class MqttWorker : DeviceWorker
         }
     }
 
-    private int sequencenumber = 1;
-
     /// <summary>
     /// Send a single node or device data message
     /// </summary>
@@ -339,7 +352,6 @@ public class MqttWorker : DeviceWorker
         { 
             Model = component.Value.dtmi,
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            Seq = sequencenumber++,
             Metrics = telemetry_dict
         };
 
