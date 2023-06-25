@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="pwsh --command &quot; &amp;'$(ProjectDir)scripts\Get-Version.ps1' &gt; '$(ProjectDir)version.txt' &quot;" />
+    <Exec Command="pwsh --command &quot; &amp;'$(ProjectDir)..\scripts\Get-Version.ps1' &gt; '$(ProjectDir)version.txt' &quot;" />
   </Target>
 
   <ItemGroup>
