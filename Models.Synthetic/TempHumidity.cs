@@ -115,7 +115,7 @@ public class TempHumidityModel :  IComponentModel
 
         // Adjust for corrections
         reading.Temperature += TemperatureCorrection;
-        reading.Temperature += TemperatureCorrection;
+        reading.Humidity += HumidityCorrection;
 
         // Return it
         return reading;

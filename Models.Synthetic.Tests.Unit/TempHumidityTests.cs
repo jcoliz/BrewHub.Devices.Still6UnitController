@@ -34,10 +34,35 @@ public class TempHumidityTests
     [TestCase("2023-01-01T00:00:00Z",0.0)]
     public void TemperatureOnDate(string time, double expected)
     {
+        // Given: The time is now {time}
         var dt = DateTimeOffset.Parse(time);
         clock.UtcNow = dt;
+
+        // When: Getting telemetry
         var actual = component.GetTelemetry() as TempHumidityModel.SimulatedTelemetry;
 
+        // Then: The temperature is {expected}
+        Assert.That(actual!.Temperature,Is.EqualTo(expected).Within(0.001));
+    }
+
+    [TestCase("2023-01-01T00:00:00Z","0",0.0)]
+    [TestCase("2023-01-01T00:00:00Z","-1",-1.0)]
+    [TestCase("2023-01-01T00:00:00Z","-1.5",-1.5)]
+    [TestCase("2023-01-01T00:00:00Z","25.71",25.71)]
+    public void TemperatureCorrection(string time, string correction, double expected)
+    {
+        // Given: The time is now {time}
+        var dt = DateTimeOffset.Parse(time);
+        clock.UtcNow = dt;
+
+        // When: Setting temperature correction to {correction}
+        var state = new Dictionary<string,string>() { { "tcorr",correction } }; 
+        component.SetInitialState(state);
+
+        // And: Getting telemetry
+        var actual = component.GetTelemetry() as TempHumidityModel.SimulatedTelemetry;
+
+        // Then: The temperature is {expected}
         Assert.That(actual!.Temperature,Is.EqualTo(expected).Within(0.001));
     }
 }
