@@ -52,11 +52,15 @@ public class TempHumidityModel :  IComponentModel
             // Temperature varies by:
             //      - 20 degrees over the course of a year
             //      - 15 degrees over the course of a day
-            //      - +/- 1 degrees randomly at any moment
+            //      - 2 degrees over the course of a minute
 
-            var dailytemp = 10.0 - 10.0 * Math.Cos( dt.DayOfYear/366.0 * 2 * Math.PI );
-            var hourlyangle = dt.Hour / 24.0 * 2.0 * Math.PI;
-            var hourlytemp = 7.5 - 7.5 * Math.Cos( hourlyangle );
+            double OverRange(double max, double invar)
+            {
+                return (max / 2.0) * ( 1 - Math.Cos( invar * 2.0 * Math.PI ));
+            }
+
+            var dailytemp = OverRange(20.0,(dt.DayOfYear-1)/365.0);
+            var hourlytemp = OverRange(15.0,dt.Hour / 24.0);
 
             Temperature = dailytemp + hourlytemp;
 
