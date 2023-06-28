@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrewHub.Controller", "Controller\BrewHub.Controller.csproj", "{340FA29B-E308-4F38-8353-93C183296A6E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models.Synthetic", "Models.Synthetic\Models.Synthetic.csproj", "{10AF41A7-8866-4D5F-ACD2-033B5B98A115}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{340FA29B-E308-4F38-8353-93C183296A6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{340FA29B-E308-4F38-8353-93C183296A6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{340FA29B-E308-4F38-8353-93C183296A6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10AF41A7-8866-4D5F-ACD2-033B5B98A115}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10AF41A7-8866-4D5F-ACD2-033B5B98A115}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10AF41A7-8866-4D5F-ACD2-033B5B98A115}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10AF41A7-8866-4D5F-ACD2-033B5B98A115}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
