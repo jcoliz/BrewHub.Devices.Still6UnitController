@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 
 /// <summary>
 /// Basic Temperature &amp; Humidity Sensor
+/// With synthetic (simulated) data
 /// </summary>
 public class TempHumidityModel :  IComponentModel
 {
@@ -35,12 +36,12 @@ public class TempHumidityModel :  IComponentModel
     #region Telemetry
 
     /// <summary>
-    /// Generates simulated telemetry in case we don't have an actual sensor
+    /// Generates synthetic telemetry in case we don't have an actual sensor
     /// attached.
     /// </summary>
     /// <remarks>
-    /// Whether or not we are running with a real sensor is a runtime decision
-    /// based on "Initial State" configuration.
+    /// If we have a physical sensor attached, we should not be using this
+    /// model at all.
     /// </remarks>
     public class SimulatedTelemetry
     {
