@@ -89,4 +89,25 @@ public class TempHumidityTests
         Assert.That(actual!.Humidity,Is.EqualTo(expected).Within(0.001));
     }
 
+    [TestCase("2023-01-01T12:00:00Z","0",50.0)]
+    [TestCase("2023-01-01T12:00:00Z","-1",49.0)]
+    [TestCase("2023-01-01T12:00:00Z","-1.5",48.5)]
+    [TestCase("2023-01-01T12:00:00Z","25.71",75.71)]
+    public void HumidityCorrection(string time, string correction, double expected)
+    {
+        // Given: The time is now {time}
+        var dt = DateTimeOffset.Parse(time);
+        clock.UtcNow = dt;
+
+        // When: Setting humidity correction to {correction}
+        var state = new Dictionary<string,string>() { { "hcorr",correction } }; 
+        component.SetInitialState(state);
+
+        // And: Getting telemetry
+        var actual = component.GetTelemetry() as TempHumidityModel.SimulatedTelemetry;
+
+        // Then: The humidity is {expected}
+        Assert.That(actual!.Humidity,Is.EqualTo(expected).Within(0.001));
+    }
+
 }
