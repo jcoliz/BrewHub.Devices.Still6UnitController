@@ -105,6 +105,13 @@ public class MqttWorker : DeviceWorker
                 throw new ApplicationException($"Unable to find MQTT connection details in app configuration. Create a config.toml with connection details in the content root ({_hostenv.ContentRootPath}).");
 
             var server = GetConfig("MQTT:server");
+
+            if ( server == "none" )
+            {
+                _logger.LogWarning(LogEvents.MqttServerNone,"Connection: Using 'none' for MQTT server. This is only useful for testing/debugging.");
+                return;
+            }
+
             var port = _config["MQTT:port"] ?? "1883";
             var topic1 = GetConfig("MQTT:topic");
             var site = _config["MQTT:site"] ?? "none";
@@ -271,7 +278,7 @@ public class MqttWorker : DeviceWorker
 
             if (_model.TelemetryPeriod > TimeSpan.Zero)
             {
-                if (!mqttClient!.IsConnected)
+                if (mqttClient is not null && !mqttClient.IsConnected)
                 {
                     // MqttNotConnectedNotSent
                     _logger.LogWarning(LogEvents.MqttNotConnectedTelemetryNotSent,"MQTT: Client not connected. Telemetry not sent.");
@@ -357,17 +364,24 @@ public class MqttWorker : DeviceWorker
 
         var json = System.Text.Json.JsonSerializer.Serialize(payload);
         
-        var message = new MqttApplicationMessageBuilder()
-            .WithTopic(topic)
-            .WithPayload(json)
-            .WithExactlyOnceQoS()
-            .WithRetainFlag()
-            .Build();
+        if (mqttClient is not null)
+        {
+            var message = new MqttApplicationMessageBuilder()
+                .WithTopic(topic)
+                .WithPayload(json)
+                .WithExactlyOnceQoS()
+                .WithRetainFlag()
+                .Build();
 
-        await mqttClient!.PublishAsync(message, CancellationToken.None); // Since 3.0.5 with CancellationToken
+            await mqttClient!.PublishAsync(message, CancellationToken.None); // Since 3.0.5 with CancellationToken
 
-        // Log about it
-        _logger.LogDebug(LogEvents.MqttDataMessageSent,"MQTT: Sent {topic} {message}", topic, json);
+            // Log about it
+            _logger.LogDebug(LogEvents.MqttDataMessageSent,"MQTT: Sent {topic} {message}", topic, json);
+        }
+        else
+        {
+            _logger.LogInformation(LogEvents.MqttDataMessageReady,"MQTT: Ready (no server) {topic} {message}", topic, json);
+        }
     }
 #endregion
 
@@ -377,7 +391,7 @@ public class MqttWorker : DeviceWorker
     /// </summary>
     protected override async Task UpdateReportedProperties()
     {
-        if (!mqttClient!.IsConnected)
+        if (mqttClient is not null && !mqttClient.IsConnected)
         {
             // MqttNotConnectedNotSent
             _logger.LogWarning(LogEvents.MqttNotConnectedPropertyNotSent,"MQTT: Client not connected. Properties not sent.");
