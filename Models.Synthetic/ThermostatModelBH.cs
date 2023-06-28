@@ -69,23 +69,9 @@ public class ThermostatModelBH : IComponentModel
     #endregion
 
     #region Commands
-
-    protected Task<object> GetMinMaxReport(string jsonparams)
-    {
-        if (jsonparams.Length > 0)
-        {
-            var since = JsonSerializer.Deserialize<DateTimeOffset>(jsonparams);
-            _minMaxReport.StartTime = since;
-
-        }
-        return Task.FromResult<object>(_minMaxReport);
-    }
-
     #endregion
 
     #region Fields
-
-    private readonly MinMaxReportModel _minMaxReport = new MinMaxReportModel();
 
     private int skew = 0;
 
@@ -167,11 +153,7 @@ public class ThermostatModelBH : IComponentModel
     /// <returns>Unserialized result of the action, or new() for empty result</returns>
     Task<object> IComponentModel.DoCommandAsync(string name, string jsonparams)
     {
-        return name switch
-        {
-            "getMaxMinReport" => GetMinMaxReport(jsonparams),
-            _ => throw new NotImplementedException($"Command {name} is not implemented on {dtmi}")
-        };
+        throw new NotImplementedException($"Command {name} is not implemented on {dtmi}");
     }
  
     #endregion
