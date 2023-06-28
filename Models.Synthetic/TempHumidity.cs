@@ -60,7 +60,7 @@ public class TempHumidityModel :  IComponentModel
             }
 
             var dailytemp = OverRange(20.0,(dt.DayOfYear-1)/365.0);
-            var hourlytemp = OverRange(15.0,dt.Hour / 24.0);
+            var hourlytemp = OverRange(15.0,(dt.Hour + dt.Minute/60.0) / 24.0);
 
             Temperature = dailytemp + hourlytemp;
 

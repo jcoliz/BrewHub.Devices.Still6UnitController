@@ -27,7 +27,7 @@ public class TempHumidityTests
     [TestCase("2023-07-02T12:00:00Z",35.0)]
     [TestCase("2023-07-02T00:00:00Z",20.0)]
     [TestCase("2023-01-01T12:00:00Z",15.0)]
-    [TestCase("2023-01-01T12:50:00Z",15.0)]
+    [TestCase("2023-01-01T12:50:00Z",14.8222)]
     [TestCase("2023-01-01T13:00:00Z",14.7444)]
     [TestCase("2023-01-01T00:00:00Z",0.0)]
     public void TemperatureOnDate(string time, double expected)
