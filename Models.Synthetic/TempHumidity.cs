@@ -52,7 +52,7 @@ public class TempHumidityModel :  IComponentModel
             // Temperature varies by:
             //      - 20 degrees over the course of a year
             //      - 15 degrees over the course of a day
-            //      - 2 degrees over the course of a minute
+            //      - 1 degree over the course of a minute
 
             double OverRange(double max, double invar)
             {
@@ -61,8 +61,9 @@ public class TempHumidityModel :  IComponentModel
 
             var dailytemp = OverRange(20.0,(dt.DayOfYear-1)/365.0);
             var hourlytemp = OverRange(15.0,(dt.Hour + dt.Minute/60.0) / 24.0);
+            var secondstemp = OverRange(1.0, dt.Second/60.0 );
 
-            Temperature = dailytemp + hourlytemp;
+            Temperature = dailytemp + hourlytemp + secondstemp;
 
             Humidity = (dt.Hour * 100.0 + dt.Minute + dt.Second / 100.0) / 2400.0;
         }
