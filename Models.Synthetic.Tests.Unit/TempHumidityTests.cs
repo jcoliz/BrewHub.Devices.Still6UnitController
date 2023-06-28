@@ -21,7 +21,7 @@ public class TempHumidityTests
     {
         var actual = model.ToString();
 
-        Assert.That(actual,Is.EqualTo("Simulated TH"));
+        Assert.That(actual,Is.EqualTo("Simulated T&H"));
     }
 
     [TestCase("2023-07-02T12:00:00Z",35.0)]

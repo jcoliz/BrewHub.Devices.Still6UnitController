@@ -3,11 +3,10 @@
 
 using BrewHub.Devices.Platform.Common;
 using BrewHub.Devices.Platform.Common.Clock;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// Basic Temperature & Humidity Sensor
+/// Basic Temperature &amp; Humidity Sensor
 /// </summary>
 public class TempHumidityModel :  IComponentModel
 {
@@ -87,23 +86,11 @@ public class TempHumidityModel :  IComponentModel
     /// <returns>String to identify the current device</returns>
     public override string ToString()
     {
-        #if false
-        if (PhysicalSensor is null)
-        #endif
-        return "Simulated TH";
+        return "Simulated T&H";
     }
     #endregion
 
     #region Fields
-    /// <summary>
-    /// Connection to physical sensors
-    /// </summary>
-    /// <remarks>
-    /// Or (null), indicating we are sending simulated sensor data
-    /// </remarks>
-    #if false
-    private Shtc3Physical? PhysicalSensor = null;
-    #endif
 
     private readonly IClock _clock;
 
@@ -123,36 +110,15 @@ public class TempHumidityModel :  IComponentModel
     /// <returns>All telemetry we wish to send at this time, or null for don't send any</returns>
     object? IComponentModel.GetTelemetry()
     {
-        #if false
-        // If we have a physical sensor connected, use that
-        if (PhysicalSensor is not null)
-        {
-            if (PhysicalSensor.TryUpdate())
-            {
-                // Update the properties which track the current values
-                CurrentHumidity = PhysicalSensor.Humidity;
-                CurrentTemperature = PhysicalSensor.Temperature;
+        // Take the reading
+        var reading = new SimulatedTelemetry(_clock);
 
-                // Return it
-                return PhysicalSensor;
-            }
-            else
-                return null;
-        }
-        // Otherwise, use simulated telemetry
-        else
-        #endif
-        {
-            // Take the reading
-            var reading = new SimulatedTelemetry(_clock);
+        // Adjust for corrections
+        reading.Temperature += TemperatureCorrection;
+        reading.Temperature += TemperatureCorrection;
 
-            // Adjust for corrections
-            reading.Temperature += TemperatureCorrection;
-            reading.Temperature += TemperatureCorrection;
-
-            // Return it
-            return reading;
-        }
+        // Return it
+        return reading;
     }
 
     /// <summary>
@@ -192,17 +158,6 @@ public class TempHumidityModel :  IComponentModel
 
         if (values.ContainsKey("hcorr"))
             HumidityCorrection = Convert.ToDouble(values["hcorr"]);
-
-        #if false
-        if (values.ContainsKey("Physical"))
-        {
-            var usephysical = Convert.ToBoolean(values["Physical"]);
-            if (usephysical)
-            {
-                PhysicalSensor = new Shtc3Physical();
-            }
-        }
-        #endif
     }
 
     /// <summary>
