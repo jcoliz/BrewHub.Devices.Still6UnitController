@@ -64,7 +64,11 @@ public class TempHumidityModel :  IComponentModel
 
             Temperature = dailytemp + hourlytemp + secondstemp;
 
-            Humidity = (dt.Hour * 100.0 + dt.Minute + dt.Second / 100.0) / 2400.0;
+            // Humidity varies by:
+            //      - 100% over the course of a day
+            //      - Lowest at 6:00am, highest at 6:00pm
+
+            Humidity = OverRange(100.0,(dt.Hour - 6 + (dt.Minute + dt.Second/60.0)/60.0)/24.0);
         }
 
         [JsonPropertyName("t")]

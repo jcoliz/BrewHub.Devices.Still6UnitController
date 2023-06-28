@@ -65,4 +65,28 @@ public class TempHumidityTests
         // Then: The temperature is {expected}
         Assert.That(actual!.Temperature,Is.EqualTo(expected).Within(0.001));
     }
+
+    [TestCase("2023-01-01T00:00:00Z",50.0)]
+    [TestCase("2023-01-01T06:00:00Z",0.0)]
+    [TestCase("2023-01-01T12:00:00Z",50.0)]
+    [TestCase("2023-01-01T12:00:05Z",50.0182)]
+    [TestCase("2023-01-01T12:05:00Z",51.0907)]
+    [TestCase("2023-07-15T18:00:00Z",100.0)]
+    [TestCase("2023-08-19T12:00:00Z",50.0)]
+    [TestCase("2023-12-31T18:00:00Z",100.0)]
+    [TestCase("2023-02-28T12:00:00Z",50.0)]
+    [TestCase("2023-10-21T18:00:00Z",100.0)]
+    public void HumidityOnDate(string time, double expected)
+    {
+        // Given: The time is now {time}
+        var dt = DateTimeOffset.Parse(time);
+        clock.UtcNow = dt;
+
+        // When: Getting telemetry
+        var actual = component.GetTelemetry() as TempHumidityModel.SimulatedTelemetry;
+
+        // Then: The humidity is {expected}
+        Assert.That(actual!.Humidity,Is.EqualTo(expected).Within(0.001));
+    }
+
 }
