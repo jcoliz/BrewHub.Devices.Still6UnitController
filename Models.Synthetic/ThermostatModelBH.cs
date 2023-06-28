@@ -2,19 +2,31 @@
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
 using BrewHub.Devices.Platform.Common;
+using BrewHub.Devices.Platform.Common.Clock;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace BrewHub.Controllers;
+namespace BrewHub.Controllers.Models.Synthetic;
 
 /// <summary>
 /// Thermostat: Reports current temperature and provides desired temperature control
 /// </summary>
 /// <remarks>
-/// "dtmi:brewhub:controls:Thermostat;1";
+/// The design of this component is described in:
+/// Task 1627: Fake reflux loop
+/// Implements "dtmi:brewhub:controls:Thermostat;1";
 /// </remarks>
 public class ThermostatModelBH : IComponentModel
 {    
+    #region Constructor
+
+    public ThermostatModelBH(IClock? clock = null)
+    {
+        _clock = clock ?? new SystemClock();
+    }
+
+    #endregion
+
     #region Properties
 
     [JsonPropertyName("__t")]
@@ -74,6 +86,7 @@ public class ThermostatModelBH : IComponentModel
     #region Fields
 
     private int skew = 0;
+    private readonly IClock _clock;
 
     #endregion
 

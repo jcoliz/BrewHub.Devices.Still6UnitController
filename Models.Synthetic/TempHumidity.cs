@@ -5,6 +5,7 @@ using BrewHub.Devices.Platform.Common;
 using BrewHub.Devices.Platform.Common.Clock;
 using System.Text.Json.Serialization;
 
+
 /// <summary>
 /// Basic Temperature &amp; Humidity Sensor
 /// With synthetic (simulated) data
