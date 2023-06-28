@@ -31,4 +31,8 @@
     <EmbeddedResource Include="version.txt" />  
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Models.Synthetic\Models.Synthetic.csproj" />
+  </ItemGroup>
+
 </Project>
