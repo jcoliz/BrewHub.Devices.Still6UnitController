@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
 using BrewHub.Devices.Platform.Common;
+using BrewHub.Devices.Platform.Common.Clock;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -10,6 +11,15 @@ using System.Text.Json.Serialization;
 /// </summary>
 public class TempHumidityModel :  IComponentModel
 {
+    #region Constructor
+
+    public TempHumidityModel(IClock? clock = null)
+    {
+        _clock = clock ?? new SystemClock();
+    }
+
+    #endregion
+
     #region Properties
 
     [JsonPropertyName("__t")]
@@ -35,10 +45,21 @@ public class TempHumidityModel :  IComponentModel
     /// </remarks>
     public class SimulatedTelemetry
     {
-        public SimulatedTelemetry()
+        public SimulatedTelemetry(IClock clock)
         {
-            var dt = DateTimeOffset.UtcNow;
-            Temperature = (dt.Hour * 100.0 + dt.Minute + dt.Second / 100.0) / 3000.0;            
+            var dt = clock.UtcNow;
+
+            // Temperature varies by:
+            //      - 20 degrees over the course of a year
+            //      - 15 degrees over the course of a day
+            //      - +/- 1 degrees randomly at any moment
+
+            var dailytemp = 10.0 - 10.0 * Math.Cos( dt.DayOfYear/366.0 * 2 * Math.PI );
+            var hourlyangle = dt.Hour / 24.0 * 2.0 * Math.PI;
+            var hourlytemp = 7.5 - 7.5 * Math.Cos( hourlyangle );
+
+            Temperature = dailytemp + hourlytemp;
+
             Humidity = (dt.Hour * 100.0 + dt.Minute + dt.Second / 100.0) / 2400.0;
         }
 
@@ -78,6 +99,9 @@ public class TempHumidityModel :  IComponentModel
     #if false
     private Shtc3Physical? PhysicalSensor = null;
     #endif
+
+    private readonly IClock _clock;
+
     #endregion
 
     #region IComponentModel
@@ -115,7 +139,7 @@ public class TempHumidityModel :  IComponentModel
         #endif
         {
             // Take the reading
-            var reading = new SimulatedTelemetry();
+            var reading = new SimulatedTelemetry(_clock);
 
             // Adjust for corrections
             reading.Temperature += TemperatureCorrection;

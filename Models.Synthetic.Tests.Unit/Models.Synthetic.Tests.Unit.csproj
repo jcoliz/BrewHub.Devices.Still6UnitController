@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Models.Synthetic\Models.Synthetic.csproj" />
+    <ProjectReference Include="..\Platform.Common\Platform.Common.csproj" />
   </ItemGroup>
 
 </Project>
