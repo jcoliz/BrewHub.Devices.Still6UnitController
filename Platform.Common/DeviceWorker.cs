@@ -3,6 +3,9 @@
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
 using System.Reflection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace BrewHub.Devices.Platform.Common;
 
