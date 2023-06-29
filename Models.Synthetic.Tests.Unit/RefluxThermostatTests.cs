@@ -1,3 +1,6 @@
+// Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
+// Use of this source code is governed by the MIT license (see LICENSE file)
+
 using BrewHub.Devices.Platform.Common;
 using BrewHub.Devices.Platform.Common.Clock;
 using BrewHub.Controllers.Models.Synthetic;
@@ -25,6 +28,9 @@ public class RefluxThermostatTests
         Assert.That(actual,Is.EqualTo("dtmi:brewhub:controls:Thermostat;1"));
     }
 
+    /// <summary>
+    /// Scenario: Temperature starts at {startpoint} when system starts
+    /// </summary>
     [Test]
     public void StartPoint()
     {
@@ -40,6 +46,9 @@ public class RefluxThermostatTests
         Assert.That(actual!.Temperature,Is.EqualTo(startpoint));
     }
 
+    /// <summary>
+    /// Scenario: When reflux valve is closed, {velocity} increases by {hotaccel} degrees every {timeframe}
+    /// </summary>
     [Test]
     public void HotAcceleration()
     {
@@ -65,6 +74,9 @@ public class RefluxThermostatTests
         Assert.That(actual!.Temperature,Is.EqualTo(expected));
     }
 
+    /// <summary>
+    /// Scenario: When temperature exceeds Target property by {tolerance}, opens the reflux valve
+    /// </summary>
     [Test]
     public void ValveOpens()
     {
@@ -93,6 +105,9 @@ public class RefluxThermostatTests
         Assert.That(model.IsOpen,Is.True);
     }
 
+    /// <summary>
+    /// When reflux valve is open, {velocity} decreases {coldaccel} degrees every {timeframe}
+    /// </summary>
     [Test]
     public void ColdAcceleration()
     {
@@ -122,7 +137,10 @@ public class RefluxThermostatTests
         var expected = hightemp + velocity * time.TotalSeconds + coldaccel/2.0 * Math.Pow( time.TotalSeconds, 2.0); 
         Assert.That(actual!.Temperature,Is.EqualTo(expected));
     }
-
+    
+    /// <summary>
+    /// Scenario: When temperature falls below Target property by {tolerance}, closes the reflux valve
+    /// </summary>
     [Test]
     public void ValveCloses()
     {
@@ -155,11 +173,29 @@ public class RefluxThermostatTests
         Assert.That(model.IsOpen,Is.False);
     }
 
-    // Temperature starts at {startpoint} when system starts
-    // Temperature increases/decreases by {velocity} degrees every {timeframe}
-    // When reflux valve is closes, {velocity} increases by {hotaccel} degrees every {timeframe}
-    // Climbs {range} degrees every {timeframe}
-    // When temperature exceeds Target property by {tolerance}, opens the reflux valve
-    // When reflux valve is open, {velocity} decreases {coldaccel} degrees every {timeframe}
-    //When temperature falls below Target property by {tolerance}, closes the reflux valve
+    /// <summary>
+    /// Scenario: User Can calibrate the temperature readings
+    /// </summary>
+    public void TemperatureCorrection()
+    {
+    }
+
+    /// <summary>
+    /// Scenario: User can designate another component as the target temperature
+    /// </summary>
+    public void TargetFromComponent()
+    {
+        // Actually, user is going to designate a whole component PATH for the target,
+        // e.g. "amb.telem.t" which means the `t` telemetry value from the `amb` component
+
+    }
+
+    /// <summary>
+    /// Scenario: Valve component comes on when our IsOpen is  on
+    /// </summary>
+    public void ValveComponentOn()
+    {
+
+    }
+
 }
