@@ -60,17 +60,10 @@ public class ThermostatModelBH : IComponentModel
 
     #region Telemetry
 
-    public class Telemetry
+    public record Telemetry
     {
-        public Telemetry(double target)
-        {
-            var dt = DateTimeOffset.UtcNow;
-            var phase = ((int)target) % 16;
-            Temperature = target + 20.0 * Math.Sin((double)(dt.Second + phase * 3) / 30.0 * Math.PI);
-        }
-
         [JsonPropertyName("t")]
-        public double Temperature { get; private set; }
+        public double Temperature { get; init; }
 
         /// <summary>
         /// Device status. Zero is OK, >0 increasing severity to 999
@@ -87,6 +80,16 @@ public class ThermostatModelBH : IComponentModel
 
     private int skew = 0;
     private readonly IClock _clock;
+
+    /// <summary>
+    /// Current synthetic temperature
+    /// </summary>
+    private double temperature = 0.0;
+
+    /// <summary>
+    /// Current synthetic temperature velocity in C/s
+    /// </summary>
+    private double velocity = 0.0;
 
     #endregion
 
@@ -105,7 +108,7 @@ public class ThermostatModelBH : IComponentModel
     object? IComponentModel.GetTelemetry()
     {
         // Take the reading
-        var reading = new Telemetry(TargetTemperature + (double)skew);
+        var reading = new Telemetry() { Temperature = temperature };
 
         return reading;
     }
@@ -151,6 +154,11 @@ public class ThermostatModelBH : IComponentModel
             TargetComponent = values["targetComp"];
         if (values.ContainsKey("cComp"))
             ControlComponent = values["cComp"];
+
+        // Synthetic controls
+        if (values.ContainsKey("Temperature"))
+            temperature = Convert.ToDouble(values["Temperature"]);
+
 
         if (values.ContainsKey("Skew"))
         {
