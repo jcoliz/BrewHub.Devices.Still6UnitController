@@ -57,6 +57,12 @@ public class ThermostatModelBH : IComponentModel
     [JsonPropertyName("cComp")]
     public string? ControlComponent { get; private set; }
 
+    /// <summary>
+    /// Specify a component whose temperature we target. Overrides targetTemp if set.
+    /// </summary>
+    [JsonPropertyName("isOpen")]
+    public bool IsOpen { get; private set; }
+
     #endregion
 
     #region Telemetry
@@ -97,6 +103,11 @@ public class ThermostatModelBH : IComponentModel
     /// </summary>
     private double hotaccel = 0.0;
 
+    /// <summary>
+    /// How much above or below the target temp can we get
+    /// </summary>
+    private double tolerance = 5.0;
+
     private DateTimeOffset lastread = DateTimeOffset.MinValue;
 
     #endregion
@@ -132,6 +143,12 @@ public class ThermostatModelBH : IComponentModel
 
         // Update last read time
         lastread = now;
+
+        // Open valve if too hot
+        if (temperature >= TargetTemperature + tolerance)
+        {
+            IsOpen = true;
+        }
 
         return reading;
     }
@@ -183,6 +200,8 @@ public class ThermostatModelBH : IComponentModel
             temperature = Convert.ToDouble(values["Temperature"]);
         if (values.ContainsKey("HotAccel"))
             hotaccel = Convert.ToDouble(values["HotAccel"]);
+        if (values.ContainsKey("Tolerance"))
+            tolerance = Convert.ToDouble(values["Tolerance"]);
 
         if (values.ContainsKey("Skew"))
         {

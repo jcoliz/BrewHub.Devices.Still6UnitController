@@ -65,11 +65,32 @@ public class RefluxThermostatTests
         Assert.That(actual!.Temperature,Is.EqualTo(expected));
     }
 
-    public void RefluxValveCloses()
+    [Test]
+    public void RefluxValveOpens()
     {
-        // Given: Initial values of StartPoint:{startpoint}, HotAccel:{hotaccel} (C/s^2), Tolerance:{tolerance}
+        // Given: Initial values of StartPoint:{startpoint}, HotAccel:{hotaccel} (C/s^2), Tolerance:{tolerance}, Target: {target}
+        var startpoint = 30.0;
+        var hotaccel = 0.2;
+        var tolerance = 5.0;
+        var target = 80.0;
+        var state = new Dictionary<string,string>() 
+        { 
+            { "Temperature", $"{startpoint:F0}" },
+            { "HotAccel", $"{hotaccel:F1}" },
+            { "Tolerance", $"{tolerance:F1}" },
+            { "targetTemp", $"{target:F1}" }
+        };
+        component.SetInitialState(state);
+
         // When: Sufficient time has passed, such that Temperature exceeds Target property by {tolerance}
+        var time = TimeSpan.FromSeconds(24);
+        clock.UtcNow += time;
+
+        // And: Getting telemetry (which is needed to give the model a slide of CPU to work in)
+        component.GetTelemetry();
+
         // Then: Thermostat opens reflux valve
+        Assert.That(model.IsOpen,Is.True);
     }
 
     // Temperature starts at {startpoint} when system starts
