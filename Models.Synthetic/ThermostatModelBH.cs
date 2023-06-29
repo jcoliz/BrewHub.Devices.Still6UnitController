@@ -1,10 +1,13 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
+using System.Runtime.CompilerServices;
 using BrewHub.Devices.Platform.Common;
 using BrewHub.Devices.Platform.Common.Clock;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
+[assembly: InternalsVisibleTo("Models.Synthetic.Tests.Unit")]
 
 namespace BrewHub.Controllers.Models.Synthetic;
 
@@ -91,17 +94,22 @@ public class ThermostatModelBH : IComponentModel
     /// <summary>
     /// Current synthetic temperature
     /// </summary>
-    private double temperature = 0.0;
+    internal double temperature = 0.0;
 
     /// <summary>
     /// Current synthetic temperature velocity in C/s
     /// </summary>
-    private double velocity = 0.0;
+    internal double velocity = 0.0;
 
     /// <summary>
     /// Current synthetic temperature accelleration when hot in C/s^2
     /// </summary>
     private double hotaccel = 0.0;
+
+    /// <summary>
+    /// Current synthetic temperature accelleration when cold in C/s^2
+    /// </summary>
+    private double coldaccel = 0.0;
 
     /// <summary>
     /// How much above or below the target temp can we get
@@ -132,14 +140,17 @@ public class ThermostatModelBH : IComponentModel
         // Measure the time since last reading
         double elapsed = (now - lastread).TotalSeconds;
 
+        // Determine the current acceleration
+        var accel = IsOpen ? coldaccel : hotaccel;
+
         // Determine the current temp
-        temperature = temperature + elapsed * velocity + hotaccel / 2.0 * elapsed * elapsed;
+        temperature = temperature + elapsed * velocity + accel / 2.0 * elapsed * elapsed;
 
         // Take the reading
         var reading = new Telemetry() { Temperature = temperature };
 
         // Update the velocity
-        velocity += hotaccel * elapsed;
+        velocity += accel * elapsed;
 
         // Update last read time
         lastread = now;
@@ -200,6 +211,8 @@ public class ThermostatModelBH : IComponentModel
             temperature = Convert.ToDouble(values["Temperature"]);
         if (values.ContainsKey("HotAccel"))
             hotaccel = Convert.ToDouble(values["HotAccel"]);
+        if (values.ContainsKey("ColdAccel"))
+            coldaccel = Convert.ToDouble(values["ColdAccel"]);
         if (values.ContainsKey("Tolerance"))
             tolerance = Convert.ToDouble(values["Tolerance"]);
 

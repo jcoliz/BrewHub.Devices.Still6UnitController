@@ -93,6 +93,38 @@ public class RefluxThermostatTests
         Assert.That(model.IsOpen,Is.True);
     }
 
+    [Test]
+    public void ColdAcceleration()
+    {
+        // Given: Initial values of ColdAccel
+        var coldaccel = -0.5;
+        var state = new Dictionary<string,string>() 
+        { 
+            { "ColdAccel", $"{coldaccel:F1}" },
+        };
+        component.SetInitialState(state);
+
+        // And: Reflux Valve has gotten open
+        RefluxValveOpens();
+
+        // Current temp
+        var hightemp = model.temperature;
+
+        // Current temp velocity 
+        var velocity = model.velocity;
+
+        // When: More {time} has passed
+        var time = TimeSpan.FromSeconds(20);
+        clock.UtcNow += time;
+
+        // And: Getting Telemetry
+        var actual = component.GetTelemetry() as ThermostatModelBH.Telemetry;
+
+        // Then: Temperature is {hightemp} + {velocity} * {time} + {coldaccel}/2 * {time}^2
+        var expected = hightemp + velocity * time.TotalSeconds + coldaccel/2.0 * Math.Pow( time.TotalSeconds, 2.0); 
+        Assert.That(actual!.Temperature,Is.EqualTo(expected));
+    }
+
     // Temperature starts at {startpoint} when system starts
     // Temperature increases/decreases by {velocity} degrees every {timeframe}
     // When reflux valve is closes, {velocity} increases by {hotaccel} degrees every {timeframe}
