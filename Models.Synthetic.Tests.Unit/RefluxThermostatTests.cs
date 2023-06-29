@@ -40,13 +40,29 @@ public class RefluxThermostatTests
         Assert.That(actual!.Temperature,Is.EqualTo(startpoint));
     }
 
+    [Test]
     public void HotAcceleration()
     {
         // Given: Initial values of StartPoint:{startpoint}, HotAccel:{hotaccel} (C/s^2)
+        var startpoint = 30.0;
+        var hotaccel = 0.2;
+        var state = new Dictionary<string,string>() 
+        { 
+            { "Temperature", $"{startpoint:F0}" },
+            { "HotAccel", $"{hotaccel:F1}" }
+        };
+        component.SetInitialState(state);
+
         // When: {time} has passed since system start
+        var time = TimeSpan.FromSeconds(10);
+        clock.UtcNow += time;
+
         // And: Getting Telemetry
+        var actual = component.GetTelemetry() as ThermostatModelBH.Telemetry;
+
         // Then: Temperature is {startpoint} + {hotaccel}/2 * {time}^2
-        // D = v*t + 1/2*a*t^2
+        var expected = startpoint + hotaccel/2.0 * Math.Pow( time.TotalSeconds, 2.0); 
+        Assert.That(actual!.Temperature,Is.EqualTo(expected));
     }
 
     public void RefluxValveCloses()

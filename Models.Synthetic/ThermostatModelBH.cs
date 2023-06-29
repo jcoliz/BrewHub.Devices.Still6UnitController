@@ -23,6 +23,7 @@ public class ThermostatModelBH : IComponentModel
     public ThermostatModelBH(IClock? clock = null)
     {
         _clock = clock ?? new SystemClock();
+        lastread = _clock.UtcNow;
     }
 
     #endregion
@@ -91,6 +92,13 @@ public class ThermostatModelBH : IComponentModel
     /// </summary>
     private double velocity = 0.0;
 
+    /// <summary>
+    /// Current synthetic temperature accelleration when hot in C/s^2
+    /// </summary>
+    private double hotaccel = 0.0;
+
+    private DateTimeOffset lastread = DateTimeOffset.MinValue;
+
     #endregion
 
     #region IComponentModel
@@ -107,8 +115,23 @@ public class ThermostatModelBH : IComponentModel
     /// <returns>All telemetry we wish to send at this time, or null for don't send any</returns>
     object? IComponentModel.GetTelemetry()
     {
+        // Fix the time
+        var now = _clock.UtcNow;
+
+        // Measure the time since last reading
+        double elapsed = (now - lastread).TotalSeconds;
+
+        // Determine the current temp
+        temperature = temperature + elapsed * velocity + hotaccel / 2.0 * elapsed * elapsed;
+
         // Take the reading
         var reading = new Telemetry() { Temperature = temperature };
+
+        // Update the velocity
+        velocity += hotaccel * elapsed;
+
+        // Update last read time
+        lastread = now;
 
         return reading;
     }
@@ -158,7 +181,8 @@ public class ThermostatModelBH : IComponentModel
         // Synthetic controls
         if (values.ContainsKey("Temperature"))
             temperature = Convert.ToDouble(values["Temperature"]);
-
+        if (values.ContainsKey("HotAccel"))
+            hotaccel = Convert.ToDouble(values["HotAccel"]);
 
         if (values.ContainsKey("Skew"))
         {
