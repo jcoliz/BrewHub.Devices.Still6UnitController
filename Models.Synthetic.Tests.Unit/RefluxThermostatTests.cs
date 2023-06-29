@@ -66,7 +66,7 @@ public class RefluxThermostatTests
     }
 
     [Test]
-    public void RefluxValveOpens()
+    public void ValveOpens()
     {
         // Given: Initial values of StartPoint:{startpoint}, HotAccel:{hotaccel} (C/s^2), Tolerance:{tolerance}, Target: {target}
         var startpoint = 30.0;
@@ -105,12 +105,10 @@ public class RefluxThermostatTests
         component.SetInitialState(state);
 
         // And: Reflux Valve has gotten open
-        RefluxValveOpens();
+        ValveOpens();
 
-        // Current temp
+        // And: Taken note of the Current temp and velocity
         var hightemp = model.temperature;
-
-        // Current temp velocity 
         var velocity = model.velocity;
 
         // When: More {time} has passed
@@ -123,6 +121,38 @@ public class RefluxThermostatTests
         // Then: Temperature is {hightemp} + {velocity} * {time} + {coldaccel}/2 * {time}^2
         var expected = hightemp + velocity * time.TotalSeconds + coldaccel/2.0 * Math.Pow( time.TotalSeconds, 2.0); 
         Assert.That(actual!.Temperature,Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void ValveCloses()
+    {
+        // Given: Initial values of ColdAccel
+        var coldaccel = -0.5;
+        var state = new Dictionary<string,string>() 
+        { 
+            { "ColdAccel", $"{coldaccel:F1}" },
+        };
+        component.SetInitialState(state);
+
+        // And: Reflux Valve has gotten open
+        ValveOpens();
+
+        // And: Taken note of the Current temp and velocity
+        var hightemp = model.temperature;
+        var velocity = model.velocity;
+
+        // When: Sufficient time has passed, such that Temperature falls below Target property by {tolerance}
+        var time = TimeSpan.FromSeconds(22);
+        clock.UtcNow += time;
+
+        // And: Getting telemetry (which is needed to give the model a slide of CPU to work in)
+        component.GetTelemetry();
+
+        // And: Temperature has gone below the threshold
+        Assert.That(model.temperature,Is.LessThan(75.0));
+
+        // Then: Thermostat opens reflux valve
+        Assert.That(model.IsOpen,Is.False);
     }
 
     // Temperature starts at {startpoint} when system starts

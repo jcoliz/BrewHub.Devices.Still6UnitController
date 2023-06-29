@@ -160,6 +160,11 @@ public class ThermostatModelBH : IComponentModel
         {
             IsOpen = true;
         }
+        // Close valve if too cold
+        if (temperature <= TargetTemperature - tolerance)
+        {
+            IsOpen = false;
+        }
 
         return reading;
     }
