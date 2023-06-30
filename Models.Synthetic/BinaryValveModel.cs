@@ -1,24 +1,47 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
+using BrewHub.Devices.Platform.Common.Comms;
 using BrewHub.Devices.Platform.Common.Models;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
+
+[assembly: InternalsVisibleTo("Models.Synthetic.Tests.Unit")]
+
+namespace BrewHub.Controllers.Models.Synthetic;
 
 /// <summary>
 /// Binary Valve: Controls a single two-state (on/off) valve.
 /// </summary>
+/// <remarks>
+/// The design of this component is described in:
+/// Task 1627: Fake reflux loop
+/// Implements ""dtmi:brewhub:controls:BinaryValve;1";
+/// </remarks>
 public class BinaryValveModel :  IComponentModel
 {
+    #region Constructor
+
+    public BinaryValveModel(IComponentCommunicator? comms = null)
+    {
+        _comms = comms;
+    }
+
+    #endregion
+
     #region Properties
 
     [JsonPropertyName("__t")]
     public string ComponentID => "c";
 
     /// <summary>
-    /// Override system contol
+    /// Metric on another component to use as our state (optional)
     /// </summary>
-    [JsonPropertyName("manual")]
-    public bool ManualControl { get; set; }
+    /// <remarks>
+    /// Overrides `open` if set
+    /// </remarks>
+    [JsonPropertyName("sourceMetric")]
+    public string? SourceMetric { get; set; }
 
     /// <summary>
     /// Whether the valve is open. Only writable if `Manual Control` is turned on
@@ -38,6 +61,8 @@ public class BinaryValveModel :  IComponentModel
     #endregion
 
     #region Fields
+
+    private readonly IComponentCommunicator? _comms;
     #endregion
 
     #region IComponentModel
@@ -54,6 +79,15 @@ public class BinaryValveModel :  IComponentModel
     /// <returns>All telemetry we wish to send at this time, or null for don't send any</returns>
     object? IComponentModel.GetTelemetry()
     {
+        // We use this moment of CPU time slice to update our IsOpen value
+        // based on our source metric
+        if (SourceMetric is not null && _comms is not null)
+        {
+            // Override IsOpen with source metric
+            var strmetric = _comms.GetMetricValueAsync(SourceMetric).Result;
+            IsOpen = Convert.ToBoolean(strmetric);
+        }
+
         // Component does not generate telemetry
         return null;
     }
@@ -66,8 +100,8 @@ public class BinaryValveModel :  IComponentModel
     /// <returns>The unserialized new value of the property</returns>
     object IComponentModel.SetProperty(string key, string jsonvalue)
     {
-        if (key == "manual")
-            return ManualControl = Convert.ToBoolean(jsonvalue);
+        if (key == "sourceMetric")
+            return SourceMetric = jsonvalue;
 
         if (key == "open")
             return IsOpen = Convert.ToBoolean(jsonvalue);
@@ -90,6 +124,8 @@ public class BinaryValveModel :  IComponentModel
     /// <param name="values">Dictionary of all known configuration values which could apply to this component</param>
     void IComponentModel.SetInitialState(IDictionary<string, string> values)
     {
+        if (values.ContainsKey("sourceMetric"))
+            SourceMetric = values["sourceMetric"];
     }
 
     /// <summary>
