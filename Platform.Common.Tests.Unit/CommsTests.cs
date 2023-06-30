@@ -33,4 +33,28 @@ public class CommsTests
         // Then: The value of the property is returned
         Assert.That(result, Is.EqualTo("Unassigned"));
     }
+
+    /// <summary>
+    /// Scenario: Request telemetry from root
+    /// </summary>
+    public Task RootTelemetry()
+    {
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Scenario: Request property from child component
+    /// </summary>
+    public Task ChildProperty()
+    {
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Scenario: Request property from child component
+    /// </summary>
+    public Task ChildTelemetry()
+    {
+        return Task.CompletedTask;
+    }
 }
