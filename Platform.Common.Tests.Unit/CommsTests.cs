@@ -57,9 +57,22 @@ public class CommsTests
     /// <summary>
     /// Scenario: Request property from child component
     /// </summary>
-    public Task ChildProperty()
+    [Test]
+    public async Task ChildProperty()
     {
-        return Task.CompletedTask;
+        // Given: A communicator set up on a root model with child components
+        // (done in Setup)
+
+        // And: An initial property value of {expected} on component {id}
+        var id = "th1";
+        var expected = "1009";
+        root!.Components[id].SetInitialState(new Dictionary<string, string>() { { "hcorr", expected } });
+
+        // When: Asking for the metric value of the expected telemetry on the component {id}
+        var result = await comms!.GetMetricValueAsync($"{id}.hcorr");
+
+        // Then: The value of the property is returned as expected
+        Assert.That(result, Is.EqualTo($"{expected}"));    
     }
 
     /// <summary>
