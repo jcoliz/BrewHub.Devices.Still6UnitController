@@ -9,7 +9,7 @@ namespace Platform.Common.Tests.Unit;
 public class CommsTests
 {
     IComponentCommunicator? comms = null;
-    IRootModel? root = null;
+    SimpleRootModel? root = null;
 
     [SetUp]
     public void Setup()
@@ -37,9 +37,21 @@ public class CommsTests
     /// <summary>
     /// Scenario: Request telemetry from root
     /// </summary>
-    public Task RootTelemetry()
+    [Test]
+    public async Task RootTelemetry()
     {
-        return Task.CompletedTask;
+        // Given: A communicator set up on a single root model
+        // (done in Setup)
+
+        // And: An initial telemetry value of {expected}
+        double expected = 1234.56;
+        root.workingSet = expected;
+
+        // When: Asking for the metric value of the expected telemetry
+        var result = await comms!.GetMetricValueAsync("workingSet");
+
+        // Then: The value of the property is returned as expected
+        Assert.That(result, Is.EqualTo($"{expected}"));
     }
 
     /// <summary>

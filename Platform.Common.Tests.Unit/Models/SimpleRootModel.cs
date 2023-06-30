@@ -33,20 +33,15 @@ public class SimpleRootModel : IRootModel
     public class Telemetry
     {
         [JsonPropertyName("workingSet")]
-        public double WorkingSetKiB
-        {
-            get
-            {
-                var ws = System.Diagnostics.Process.GetCurrentProcess().WorkingSet64;
-
-                // Convert to Kibibits
-                return (double)ws / (1024.0 / 8.0);
-            }
-        }
+        public double WorkingSetKiB { get; init; }
     }
 
     #endregion    
     TimeSpan IRootModel.TelemetryPeriod => _TelemetryPeriod;
+
+    #region Fields
+    internal double workingSet { get; set; }
+    #endregion
 
     [JsonIgnore]
     public IDictionary<string, IComponentModel> Components => throw new NotImplementedException();
@@ -67,7 +62,7 @@ public class SimpleRootModel : IRootModel
     public object? GetTelemetry()
     {
         // Take the reading, return it
-        return new Telemetry();
+        return new Telemetry() { WorkingSetKiB = workingSet };
     }
 
     public void SetInitialState(IDictionary<string, string> values)
