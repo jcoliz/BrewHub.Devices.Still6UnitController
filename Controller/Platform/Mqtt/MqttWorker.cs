@@ -155,8 +155,9 @@ public class MqttWorker : DeviceWorker
             if (!mqttClient.IsConnected)
                 throw new ApplicationException("Timeout attempting to connect");
 
-            // TODO: Move into BrewHub.Protocol
-            await mqttClient.SubscribeAsync($"brewhub;1/none/NCMD/{_options.Value.ClientId}/#");
+            // Listen for all node command messages
+            var topic = messageGenerator.GetTopic(MessageGenerator.MessageKind.NodeCommandAll);
+            await mqttClient.SubscribeAsync(topic);
         }
         catch (Exception ex)
         {
@@ -357,10 +358,10 @@ public class MqttWorker : DeviceWorker
 
         // Create message
 
-        var (topic, payload) = messageGenerator.Generate(MessageGenerator.MessageKind.Data, _options.Value.ClientId!, component.Key, component.Value.dtmi, telemetry_dict!);
+        var (topic, payload) = messageGenerator.Generate(MessageGenerator.MessageKind.Data, null, component.Key, component.Value.dtmi, telemetry_dict!);
 
         // Send it
-        
+
         var json = System.Text.Json.JsonSerializer.Serialize(payload);
         
         if (mqttClient is not null)

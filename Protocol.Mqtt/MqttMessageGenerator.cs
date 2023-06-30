@@ -5,30 +5,17 @@ namespace BrewHub.Protocol.Mqtt;
 
 public class MessageGenerator
 {
-    public enum MessageKind { Invalid = 0, Data, Telemetry, ReportedProperties, DesiredProperties, Command };
+    public enum MessageKind { Invalid = 0, Data, Telemetry, ReportedProperties, DesiredProperties, Command, NodeCommandAll };
     private readonly MqttOptions? _options;
     public MessageGenerator(MqttOptions? options)
     {
         _options = options;
     }
 
-    public (string topic, MessagePayload payload) Generate(MessageKind kind, string deviceid, string? componentid, string model, Dictionary<string, object> metrics)
+    public (string topic, MessagePayload payload) Generate(MessageKind kind, string? deviceid, string? componentid, string model, Dictionary<string, object> metrics)
     {
-        // Make sure we were configured with options
-        if (_options is null)
-            throw new ApplicationException("No MQTT options configured");
-
-        // Set the topic
-        var iscomponent = !string.IsNullOrEmpty(componentid);
-        var mtype = (kind, iscomponent) switch
-        {
-            (MessageKind.Data, true) => "DDATA",
-            (MessageKind.Data, false) => "NDATA",
-            (MessageKind.Command, true) => "DCMD",
-            (MessageKind.Command, false) => "NCMD",
-            _ => throw new NotImplementedException($"Message Kind {kind} is not implemented.")
-        };
-        var topic = $"{_options.Topic}/{_options.Site}/{mtype}/{deviceid}" + (iscomponent ? $"/{componentid}" : string.Empty);
+        // Get the topic
+        var topic = GetTopic(kind, deviceid, componentid);
 
         // Assemble the message
         var payload = new MessagePayload()
@@ -40,4 +27,27 @@ public class MessageGenerator
 
         return (topic, payload);
     }
+
+    public string GetTopic(MessageKind kind, string? deviceid = null, string? componentid = null)
+    {
+        // Make sure we were configured with options
+        if (_options is null)
+            throw new ApplicationException("No MQTT options configured");
+
+        var iscomponent = !string.IsNullOrEmpty(componentid);
+        var mtype = (kind, iscomponent) switch
+        {
+            (MessageKind.Data, true) => "DDATA",
+            (MessageKind.Data, false) => "NDATA",
+            (MessageKind.Command, true) => "DCMD",
+            (MessageKind.Command, false) => "NCMD",
+            (MessageKind.NodeCommandAll,_) => "NCMD",
+            _ => throw new NotImplementedException($"Message Kind {kind} is not implemented.")
+        };
+        var topicdeviceid = deviceid ?? _options!.ClientId;
+
+        var topic = $"{_options.Topic}/{_options.Site}/{mtype}/{topicdeviceid}" + (iscomponent ? $"/{componentid}" : string.Empty) + (kind == MessageKind.NodeCommandAll ? "/#" : string.Empty);
+
+        return topic;
+   }
 }
