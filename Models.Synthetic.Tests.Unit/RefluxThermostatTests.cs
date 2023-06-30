@@ -2,8 +2,10 @@
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
 using BrewHub.Devices.Platform.Common.Clock;
+using BrewHub.Devices.Platform.Common.Comms;
 using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Controllers.Models.Synthetic;
+using Moq;
 
 namespace Models.Synthetic.Tests.Unit;
 
@@ -11,15 +13,13 @@ public class RefluxThermostatTests
 {
     private ThermostatModelBH model = new();
     private readonly TestClock clock = new() { Locked = true };
-    private readonly ComponentCommunicatorTestHelper comms = new();
 
     private IComponentModel component => model as IComponentModel;
 
     [SetUp]
     public void Setup()
     {
-        comms.Clear();
-        model = new(clock,comms);
+        model = new(clock);
     }
 
     [Test]
@@ -191,7 +191,16 @@ public class RefluxThermostatTests
         // Actually, user is going to designate a whole component PATH for the target,
         // e.g. "amb.t" which means the `t` metric value from the `amb` component
 
-        // Given: Initial values of StartPoint:{startpoint}, HotAccel:{hotaccel} (C/s^2), Tolerance:{tolerance}, Target: {target}
+        // Given: Another component which will return a much lower target temperature on {targetprop}
+        var mock = new Mock<IComponentCommunicator>();
+        var targetprop = "amb.t";
+        var targetpropvalue = 40.0;
+        mock
+            .Setup(x => x.GetMetricValueAsync(targetprop))
+            .Returns(Task.FromResult(targetpropvalue.ToString()));
+        model = new(clock, mock.Object);
+
+        // And: Initial values of StartPoint:{startpoint}, HotAccel:{hotaccel} (C/s^2), Tolerance:{tolerance}, Target: {target}
         var startpoint = 30.0;
         var hotaccel = 0.2;
         var tolerance = 5.0;
@@ -204,11 +213,6 @@ public class RefluxThermostatTests
             { "targetTemp", $"{target:F1}" }
         };
         component.SetInitialState(state);
-
-        // And: Another component which will return a much lower target temperature on {targetprop}
-        var targetprop = "amb.t";
-        var targetpropvalue = 40.0;
-        comms.Metrics[targetprop] = targetpropvalue.ToString();
 
         // When: Setting a target component property, pointing at {targetprop}
         state = new Dictionary<string,string>() 
