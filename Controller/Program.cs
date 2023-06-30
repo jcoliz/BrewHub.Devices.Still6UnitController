@@ -2,6 +2,7 @@
 
 using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Devices.Platform.Mqtt;
+using BrewHub.Protocol.Mqtt;
 using BrewHub.Controllers;
 
 using IHost host = Host.CreateDefaultBuilder(args)
@@ -9,6 +10,10 @@ using IHost host = Host.CreateDefaultBuilder(args)
     {
         services.AddHostedService<MqttWorker>();
         services.AddSingleton<IRootModel,Still6UnitModel>();
+
+        var section = hostContext.Configuration.GetSection(MqttOptions.Section);
+        if (section.Exists())
+            services.Configure<MqttOptions>(section);
     })
     .ConfigureAppConfiguration(config =>
     {

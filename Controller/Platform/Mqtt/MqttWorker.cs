@@ -4,6 +4,7 @@
 using BrewHub.Devices.Platform.Common.Workers;
 using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Devices.Platform.Common.Logging;
+using BrewHub.Protocol.Mqtt;
 using MQTTnet;
 using MQTTnet.Client.Connecting;
 using MQTTnet.Client.Disconnecting;
@@ -13,6 +14,7 @@ using MQTTnet.Extensions.ManagedClient;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Options;
 
 namespace BrewHub.Devices.Platform.Mqtt;
 
@@ -27,10 +29,13 @@ public class MqttWorker : DeviceWorker
     private readonly IConfiguration _config;
     private readonly IHostEnvironment _hostenv;
 
+    private readonly IOptions<MqttOptions> _options;
+
     #endregion
 
     #region Fields
     private IManagedMqttClient? mqttClient;
+    private MessageGenerator messageGenerator;
     string deviceid = string.Empty;
     string basetopic = string.Empty;
     private readonly JsonSerializerOptions _jsonoptions = new()
@@ -41,7 +46,14 @@ public class MqttWorker : DeviceWorker
     #endregion
 
     #region Constructor
-    public MqttWorker(ILoggerFactory logfact, IRootModel model, IConfiguration config, IHostEnvironment hostenv, IHostApplicationLifetime lifetime): 
+    public MqttWorker(
+        ILoggerFactory logfact, 
+        IRootModel model, 
+        IConfiguration config,
+        IOptions<MqttOptions> options, 
+        IHostEnvironment hostenv, 
+        IHostApplicationLifetime lifetime
+    ): 
         base(logfact,model,config,hostenv,lifetime)
     {
         // For more compact logs, only use the class name itself, NOT fully-qualified class name
@@ -49,6 +61,9 @@ public class MqttWorker : DeviceWorker
         _model = model;
         _config = config;
         _hostenv = hostenv;
+        _options = options;
+
+        messageGenerator = new MessageGenerator(options.Value);
     }
 #endregion
 
@@ -67,7 +82,7 @@ public class MqttWorker : DeviceWorker
     {
         try
         {
-            deviceid = _config["Provisioning:deviceid"] ?? System.Net.Dns.GetHostName();
+            _options.Value.ClientId = _config["Provisioning:deviceid"] ?? System.Net.Dns.GetHostName();
 
             // If we're running in docker...
             if ( Boolean.Parse(_config["Provisioning:docker"] ?? "false") )
@@ -76,10 +91,10 @@ public class MqttWorker : DeviceWorker
 
                 // We will tell the root level component to generate the skew,
                 // using the deviceid as the seed.
-                _model.SetInitialState(new Dictionary<string,string>() {{ "Skew", deviceid }});
+                _model.SetInitialState(new Dictionary<string,string>() {{ "Skew", _options.Value.ClientId }});
             }
 
-            _logger.LogInformation(LogEvents.ProvisionOK,"Provisioning: OK. Device {id}", deviceid);
+            _logger.LogInformation(LogEvents.ProvisionOK,"Provisioning: OK. Device {id}", _options.Value.ClientId);
         }
         catch (Exception ex)
         {
@@ -96,32 +111,20 @@ public class MqttWorker : DeviceWorker
     /// <exception cref="ApplicationException">Thrown if connection fails (critical error)</exception>
     protected async override Task OpenConnection()
     {
-        string GetConfig(string key)
-        {
-            return _config[key] ?? throw new ApplicationException($"Failed. Please supply {key} in configuration");
-        }
-
         try
         {
-            if (!_config.GetSection("MQTT").Exists())
+            if (_options.Value is null)
                 throw new ApplicationException($"Unable to find MQTT connection details in app configuration. Create a config.toml with connection details in the content root ({_hostenv.ContentRootPath}).");
 
-            var server = GetConfig("MQTT:server");
-
-            if ( server == "none" )
+            if ( _options.Value.Server == "none" )
             {
                 _logger.LogWarning(LogEvents.MqttServerNone,"Connection: Using 'none' for MQTT server. This is only useful for testing/debugging.");
                 return;
             }
 
-            var port = _config["MQTT:port"] ?? "1883";
-            var topic1 = GetConfig("MQTT:topic");
-            var site = _config["MQTT:site"] ?? "none";
-            basetopic = $"{topic1}/{site}";
-
             MqttClientOptionsBuilder builder = new MqttClientOptionsBuilder()
                                         .WithClientId(deviceid)
-                                        .WithTcpServer(server, Convert.ToInt32(port));
+                                        .WithTcpServer(_options.Value.Server, _options.Value.Port);
 
             ManagedMqttClientOptions options = new ManagedMqttClientOptionsBuilder()
                                     .WithAutoReconnectDelay(TimeSpan.FromSeconds(30))
@@ -137,7 +140,7 @@ public class MqttWorker : DeviceWorker
 
             await mqttClient.StartAsync(options);
 
-            _logger.LogDebug(LogEvents.Connecting,"Connection: Connecting on {server}:{port}",server,port);
+            _logger.LogDebug(LogEvents.Connecting,"Connection: Connecting on {server}:{port}",_options.Value.Server, _options.Value.Port);
 
             // Wait here until connected.
             // Bug 1609: MQTT on controller should not show warnings when metrics not sent because not connected yet
@@ -152,7 +155,8 @@ public class MqttWorker : DeviceWorker
             if (!mqttClient.IsConnected)
                 throw new ApplicationException("Timeout attempting to connect");
 
-            await mqttClient.SubscribeAsync($"brewhub;1/none/NCMD/{deviceid}/#");
+            // TODO: Move into BrewHub.Protocol
+            await mqttClient.SubscribeAsync($"brewhub;1/none/NCMD/{_options.Value.ClientId}/#");
         }
         catch (Exception ex)
         {
@@ -346,24 +350,17 @@ public class MqttWorker : DeviceWorker
     /// </remarks>
     private async Task SendDataMessageAsync(object telemetry, KeyValuePair<string, IComponentModel> component)
     {
-        // Send Node data message
-
-        var topic = string.IsNullOrEmpty(component.Key) ? $"{basetopic}/NDATA/{deviceid}" : $"{basetopic}/DDATA/{deviceid}/{component.Key}";
-        
         // Create a dictionary of telemetry payload
 
         var telemetry_json = JsonSerializer.Serialize(telemetry,_jsonoptions);
         var telemetry_dict = JsonSerializer.Deserialize<Dictionary<string, object>>(telemetry_json);
+
+        // Create message
+
+        var (topic, payload) = messageGenerator.Generate(MessageGenerator.MessageKind.Data, _options.Value.ClientId!, component.Key, component.Value.dtmi, telemetry_dict!);
+
+        // Send it
         
-        // Create a dictionary of message envelope
-
-        var payload = new MessagePayload()
-        { 
-            Model = component.Value.dtmi,
-            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            Metrics = telemetry_dict
-        };
-
         var json = System.Text.Json.JsonSerializer.Serialize(payload);
         
         if (mqttClient is not null)
