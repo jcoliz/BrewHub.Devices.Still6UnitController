@@ -181,6 +181,16 @@ public class ThermostatModelBH : IComponentModel
         // Update the velocity
         velocity += accel * elapsed;
 
+        // Terminal velocity
+        if (accel < 0)
+        {
+            velocity = Math.Max(velocity, -2.0 * hotaccel);
+        }
+        else
+        {
+            velocity = Math.Min(velocity, 2.0 * hotaccel);
+        }
+
         // Update last read time
         lastread = now;
 

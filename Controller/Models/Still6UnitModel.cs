@@ -1,6 +1,7 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
+using BrewHub.Devices.Platform.Common.Comms;
 using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Controllers.Models.Synthetic;
 using System.Text.Json;
@@ -19,6 +20,27 @@ namespace BrewHub.Controllers;
 /// </remarks>
 public class Still6UnitModel : DeviceInformationModel, IRootModel
 {
+    #region Constructor
+
+    public Still6UnitModel()
+    {
+        // Condenser Thermostat has to be added here because needs reference to 'this'
+        Components.Add( new("ct",new ThermostatModelBH(null,new ComponentCommunicator(this))));
+
+        // TODO: Get working also on Linux
+        //https://github.com/dotnet/orleans/blob/3.x/src/TelemetryConsumers/Orleans.TelemetryConsumers.Linux/LinuxEnvironmentStatistics.cs
+
+        if ( RuntimeInformation.IsOSPlatform(OSPlatform.Windows) )
+        {
+            _cpuCounter = new PerformanceCounter();
+            _cpuCounter.CategoryName = "Processor";
+            _cpuCounter.CounterName = "% Processor Time";
+            _cpuCounter.InstanceName = "_Total";
+        }
+    }
+
+    #endregion
+
     #region Base Device Properties
 
     public string? SerialNumber { get; private set; } = "Unassigned";
@@ -132,37 +154,19 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
             new ThermostatModelBH()
         },
         {
-            "ct", // Condenser Thermostat
-            new ThermostatModelBH()
-        },
-        {
             "cv", // Condenser Valve
             new BinaryValveModel()
         },
         {
             "rv", // Reflux Valve
             new BinaryValveModel()
-        },
+        }
     };
     #endregion
 
     #region Internals
 
     protected readonly PerformanceCounter? _cpuCounter;
-
-    public Still6UnitModel()
-    {
-        // TODO: Get working also on Linux
-        //https://github.com/dotnet/orleans/blob/3.x/src/TelemetryConsumers/Orleans.TelemetryConsumers.Linux/LinuxEnvironmentStatistics.cs
-
-        if ( RuntimeInformation.IsOSPlatform(OSPlatform.Windows) )
-        {
-            _cpuCounter = new PerformanceCounter();
-            _cpuCounter.CategoryName = "Processor";
-            _cpuCounter.CounterName = "% Processor Time";
-            _cpuCounter.InstanceName = "_Total";
-        }
-    }
 
     #endregion
 
