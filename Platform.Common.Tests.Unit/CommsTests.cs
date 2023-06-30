@@ -45,7 +45,7 @@ public class CommsTests
 
         // And: An initial telemetry value of {expected}
         double expected = 1234.56;
-        root.workingSet = expected;
+        root!.workingSet = expected;
 
         // When: Asking for the metric value of the expected telemetry
         var result = await comms!.GetMetricValueAsync("workingSet");
@@ -65,8 +65,21 @@ public class CommsTests
     /// <summary>
     /// Scenario: Request property from child component
     /// </summary>
-    public Task ChildTelemetry()
+    [Test]
+    public async Task ChildTelemetry()
     {
-        return Task.CompletedTask;
+        // Given: A communicator set up on a root model with child components
+        // (done in Setup)
+
+        // And: An initial telemetry value of {expected} on component {id}
+        var id = "th2";
+        var expected = "567.89";
+        root!.Components[id].SetInitialState(new Dictionary<string, string>() { { "temp", expected } });
+
+        // When: Asking for the metric value of the expected telemetry on the component {id}
+        var result = await comms!.GetMetricValueAsync($"{id}.t");
+
+        // Then: The value of the property is returned as expected
+        Assert.That(result, Is.EqualTo($"{expected}"));    
     }
 }

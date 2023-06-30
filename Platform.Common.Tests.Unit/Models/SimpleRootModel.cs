@@ -44,7 +44,17 @@ public class SimpleRootModel : IRootModel
     #endregion
 
     [JsonIgnore]
-    public IDictionary<string, IComponentModel> Components => throw new NotImplementedException();
+    public IDictionary<string, IComponentModel> Components { get; } = new Dictionary<string, IComponentModel>()
+    {
+        {
+            "th1",
+            new TempHumidityTestModel()
+        },
+        {
+            "th2",
+            new TempHumidityTestModel()
+        }
+    };
 
     [JsonIgnore]
     public string dtmi => throw new NotImplementedException();
