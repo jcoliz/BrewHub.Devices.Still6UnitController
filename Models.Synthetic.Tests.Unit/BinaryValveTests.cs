@@ -38,7 +38,7 @@ public class BinaryValveTests
     {
         // Given: Another component which will return {value} as the valve state
         var mock = new Mock<IComponentCommunicator>();
-        var targetprop = "rt.open";
+        var targetprop = "rt.overTemp";
         mock
             .Setup(x => x.GetMetricValueAsync(targetprop))
             .Returns(Task.FromResult(expected.ToString()));
@@ -76,7 +76,7 @@ public class BinaryValveTests
     {
         // Given: Another component which will return {expected} as the valve state
         var mock = new Mock<IComponentCommunicator>();
-        var targetprop = "rt.open";
+        var targetprop = "rt.overTemp";
         mock
             .Setup(x => x.GetMetricValueAsync(targetprop))
             .Returns(Task.FromResult(expected.ToString()));

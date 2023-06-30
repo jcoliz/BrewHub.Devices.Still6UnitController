@@ -104,7 +104,7 @@ public class RefluxThermostatTests
         component.GetTelemetry();
 
         // Then: Thermostat opens reflux valve
-        Assert.That(model.IsOpen,Is.True);
+        Assert.That(model.IsOverTemp,Is.True);
     }
 
     /// <summary>
@@ -172,7 +172,7 @@ public class RefluxThermostatTests
         Assert.That(model.temperature,Is.LessThan(75.0));
 
         // Then: Thermostat opens reflux valve
-        Assert.That(model.IsOpen,Is.False);
+        Assert.That(model.IsOverTemp,Is.False);
     }
 
     /// <summary>
@@ -214,10 +214,10 @@ public class RefluxThermostatTests
         };
         component.SetInitialState(state);
 
-        // When: Setting a target component property, pointing at {targetprop}
+        // When: Setting a target component metric, pointing at {targetprop}
         state = new Dictionary<string,string>() 
         { 
-            { "targetComp", $"{targetprop}" }
+            { "targetMetric", $"{targetprop}" }
         };
         component.SetInitialState(state);
 
@@ -231,7 +231,7 @@ public class RefluxThermostatTests
         var t = component.GetTelemetry() as ThermostatModelBH.Telemetry;
 
         // Then: Thermostat opens reflux valve
-        Assert.That(model.IsOpen,Is.True,$"Current temp: {t.Temperature}");
+        Assert.That(model.IsOverTemp,Is.True,$"Current temp: {t!.Temperature}");
     }
 
     /// <summary>

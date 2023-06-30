@@ -1,1 +1,1 @@
-dmr-client validate --directory . -r ..
+dmr-client validate --directory ./dtmi/ -r .

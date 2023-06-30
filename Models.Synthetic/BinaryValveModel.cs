@@ -35,7 +35,7 @@ public class BinaryValveModel :  IComponentModel
     public string ComponentID => "c";
 
     /// <summary>
-    /// Metric on another component to use as our state (optional)
+    /// Metric on another component to use as our open/close state (optional)
     /// </summary>
     /// <remarks>
     /// Overrides `open` if set
@@ -44,7 +44,7 @@ public class BinaryValveModel :  IComponentModel
     public string? SourceMetric { get; set; }
 
     /// <summary>
-    /// Whether the valve is open. Only writable if `Manual Control` is turned on
+    /// Whether the valve is open. Only writable if `Source Metric` is null
     /// </summary>
     [JsonPropertyName("open")]
     public bool IsOpen { get; set; }

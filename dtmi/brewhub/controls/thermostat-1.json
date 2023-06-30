@@ -64,12 +64,12 @@
         {
             "@type": [
                 "Property",
-                "Charting"
+                "Dashboard"
             ],
-            "name": "targetComp",
+            "name": "targetMetric",
             "schema": "string",
-            "displayName": "Target Component",
-            "description": "Specify a component whose temperature we target. Overrides targetTemp if set.",
+            "displayName": "Target Metric",
+            "description": "Specify a metric on another component whose temperature we target. Overrides targetTemp if set.",
             "writable": true,
             "chartlevel": "component"
         },
@@ -77,11 +77,12 @@
             "@type": [
                 "Property"
             ],
-            "name": "cComp",
-            "schema": "string",
-            "displayName": "Control Component",
-            "description": "Which component we control, in trying to bring temperature to target",
-            "writable": true
+            "name": "overTemp",
+            "schema": "boolean",
+            "displayName": {
+                "en": "Is Over Temp"
+            },
+            "description": "Temperature reading is over target temp"
         }
     ]
 }

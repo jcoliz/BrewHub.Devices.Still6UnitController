@@ -7,27 +7,25 @@
     "contents": [
         {
             "@type": [
-                "Property"
-            ],
-            "name": "manual",
-            "schema": "boolean",
-            "displayName": {
-                "en": "Manual Control"
-            },
-            "description": "Override system contol",
-            "writable": true
-        },        
-        {
-            "@type": [
                 "Property",
                 "Dashboard"
             ],
             "name": "open",
             "schema": "boolean",
             "displayName": "Is Open",
-            "description": "Whether the valve is open. Only writable if `Manual Control` is turned on",
+            "description": "Whether the valve is open. Only writable if `Source Metric` is null.",
             "writable": true,
             "chartlevel": "component"
+        },
+        {
+            "@type": [
+                "Property"
+            ],
+            "name": "sourceMetric",
+            "schema": "string",
+            "displayName": "Source Metric",
+            "description": "Metric on another component to use as our open/close state (optional)",
+            "writable": true
         }
     ]
 }

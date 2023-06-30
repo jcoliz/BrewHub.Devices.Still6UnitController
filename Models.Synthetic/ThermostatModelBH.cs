@@ -49,25 +49,19 @@ public class ThermostatModelBH : IComponentModel
     /// Correction value to apply for temperature readings
     /// </summary>
     [JsonPropertyName("tcorr")]
-    public double TemperatureCurrection { get; private set; }
+    public double TemperatureCorrection { get; private set; }
 
     /// <summary>
-    /// Specify a component whose temperature we target. Overrides targetTemp if set.
+    /// Specify a metric on another component whose temperature we target. Overrides targetTemp if set.
     /// </summary>
-    [JsonPropertyName("targetComp")]
-    public string? TargetComponent { get; private set; }
+    [JsonPropertyName("targetMetric")]
+    public string? TargetMetric { get; private set; }
 
     /// <summary>
-    /// Specify a component to adjust in trying to bring temperature to target.
+    /// Temperature reading is over target temp.
     /// </summary>
-    [JsonPropertyName("cComp")]
-    public string? ControlComponent { get; private set; }
-
-    /// <summary>
-    /// Specify a component whose temperature we target. Overrides targetTemp if set.
-    /// </summary>
-    [JsonPropertyName("isOpen")]
-    public bool IsOpen { get; private set; }
+    [JsonPropertyName("overTemp")]
+    public bool IsOverTemp { get; private set; }
 
     #endregion
 
@@ -75,11 +69,14 @@ public class ThermostatModelBH : IComponentModel
 
     public record Telemetry
     {
+        /// <summary>
+        /// Temperature in degrees Celsius
+        /// </summary>
         [JsonPropertyName("t")]
         public double Temperature { get; init; }
 
         /// <summary>
-        /// Device status. Zero is OK, >0 increasing severity to 999
+        /// Component status. Zero is OK, >0 increasing severity to 999
         /// </summary>
         public int Status { get; set; }
     }
@@ -136,9 +133,9 @@ public class ThermostatModelBH : IComponentModel
     /// <returns></returns>
     private double CalculateTargetTemperature()
     {
-        if (TargetComponent is not null && _comms is not null)
+        if (TargetMetric is not null && _comms is not null)
         {
-            var strresult = _comms.GetMetricValueAsync(TargetComponent).Result;
+            var strresult = _comms.GetMetricValueAsync(TargetMetric).Result;
             return Convert.ToDouble(strresult);
         }
         else
@@ -170,7 +167,7 @@ public class ThermostatModelBH : IComponentModel
         double elapsed = (now - lastread).TotalSeconds;
 
         // Determine the current acceleration
-        var accel = IsOpen ? coldaccel : hotaccel;
+        var accel = IsOverTemp ? coldaccel : hotaccel;
 
         // Determine the current temp
         temperature = temperature + elapsed * velocity + accel / 2.0 * elapsed * elapsed;
@@ -198,12 +195,12 @@ public class ThermostatModelBH : IComponentModel
         var target = CalculateTargetTemperature();
         if (temperature >= target + tolerance)
         {
-            IsOpen = true;
+            IsOverTemp = true;
         }
         // Close valve if too cold
         if (temperature <= target - tolerance)
         {
-            IsOpen = false;
+            IsOverTemp = false;
         }
 
         return reading;
@@ -218,13 +215,11 @@ public class ThermostatModelBH : IComponentModel
     object IComponentModel.SetProperty(string key, string jsonvalue)
     {
         if (key == "tcorr")
-            return TemperatureCurrection = Convert.ToDouble(jsonvalue);
+            return TemperatureCorrection = Convert.ToDouble(jsonvalue);
         if (key == "targetTemp")
             return TargetTemperature = Convert.ToDouble(jsonvalue);
-        if (key == "targetComp")
-            return TargetComponent = JsonSerializer.Deserialize<string>(jsonvalue)!;
-        if (key == "cComp")
-            return ControlComponent =  JsonSerializer.Deserialize<string>(jsonvalue)!;
+        if (key == "targetMetric")
+            return TargetMetric = JsonSerializer.Deserialize<string>(jsonvalue)!;
 
         throw new NotImplementedException($"Property {key} is not implemented on {dtmi}");
     }
@@ -246,10 +241,8 @@ public class ThermostatModelBH : IComponentModel
     {
         if (values.ContainsKey("targetTemp"))
             TargetTemperature = Convert.ToDouble(values["targetTemp"]);
-        if (values.ContainsKey("targetComp"))
-            TargetComponent = values["targetComp"];
-        if (values.ContainsKey("cComp"))
-            ControlComponent = values["cComp"];
+        if (values.ContainsKey("targetMetric"))
+            TargetMetric = values["targetMetric"];
 
         // Synthetic controls
         if (values.ContainsKey("Temperature"))
@@ -260,11 +253,8 @@ public class ThermostatModelBH : IComponentModel
             coldaccel = Convert.ToDouble(values["ColdAccel"]);
         if (values.ContainsKey("Tolerance"))
             tolerance = Convert.ToDouble(values["Tolerance"]);
-
         if (values.ContainsKey("Skew"))
-        {
             skew = values["Skew"].ToString().First() - '0';
-        }
     }
 
     /// <summary>
