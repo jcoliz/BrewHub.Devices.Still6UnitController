@@ -1,23 +1,25 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
-using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Devices.Platform.Common.Clock;
+using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Controllers.Models.Synthetic;
 
 namespace Models.Synthetic.Tests.Unit;
 
 public class RefluxThermostatTests
 {
-    private readonly TestClock clock = new() { Locked = true };
     private ThermostatModelBH model = new();
+    private readonly TestClock clock = new() { Locked = true };
+    private readonly ComponentCommunicatorTestHelper comms = new();
 
     private IComponentModel component => model as IComponentModel;
 
     [SetUp]
     public void Setup()
     {
-        model = new(clock);
+        comms.Clear();
+        model = new(clock,comms);
     }
 
     [Test]
@@ -183,11 +185,49 @@ public class RefluxThermostatTests
     /// <summary>
     /// Scenario: User can designate another component as the target temperature
     /// </summary>
+    [Test]
     public void TargetFromComponent()
     {
         // Actually, user is going to designate a whole component PATH for the target,
-        // e.g. "amb.telem.t" which means the `t` telemetry value from the `amb` component
+        // e.g. "amb.t" which means the `t` metric value from the `amb` component
 
+        // Given: Initial values of StartPoint:{startpoint}, HotAccel:{hotaccel} (C/s^2), Tolerance:{tolerance}, Target: {target}
+        var startpoint = 30.0;
+        var hotaccel = 0.2;
+        var tolerance = 5.0;
+        var target = 80.0;
+        var state = new Dictionary<string,string>() 
+        { 
+            { "Temperature", $"{startpoint:F0}" },
+            { "HotAccel", $"{hotaccel:F1}" },
+            { "Tolerance", $"{tolerance:F1}" },
+            { "targetTemp", $"{target:F1}" }
+        };
+        component.SetInitialState(state);
+
+        // And: Another component which will return a much lower target temperature on {targetprop}
+        var targetprop = "amb.t";
+        var targetpropvalue = 40.0;
+        comms.Metrics[targetprop] = targetpropvalue.ToString();
+
+        // When: Setting a target component property, pointing at {targetprop}
+        state = new Dictionary<string,string>() 
+        { 
+            { "targetComp", $"{targetprop}" }
+        };
+        component.SetInitialState(state);
+
+        // When: Sufficient time has passed, such that Temperature exceeds {targetprop} by {tolerance}
+        var time = TimeSpan.FromSeconds(13);
+        clock.UtcNow += time;
+
+        // And: Getting telemetry 
+        // (which is needed to give the model a slice of CPU to work in)
+        // (Also we want to print out details in case of failure)
+        var t = component.GetTelemetry() as ThermostatModelBH.Telemetry;
+
+        // Then: Thermostat opens reflux valve
+        Assert.That(model.IsOpen,Is.True,$"Current temp: {t.Temperature}");
     }
 
     /// <summary>
@@ -195,7 +235,6 @@ public class RefluxThermostatTests
     /// </summary>
     public void ValveComponentOn()
     {
-
+        // TODO: This test actually belongs in the binary valve component
     }
-
 }

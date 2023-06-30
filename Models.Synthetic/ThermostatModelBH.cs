@@ -1,9 +1,10 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
-using System.Runtime.CompilerServices;
-using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Devices.Platform.Common.Clock;
+using BrewHub.Devices.Platform.Common.Comms;
+using BrewHub.Devices.Platform.Common.Models;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -23,10 +24,12 @@ public class ThermostatModelBH : IComponentModel
 {    
     #region Constructor
 
-    public ThermostatModelBH(IClock? clock = null)
+    public ThermostatModelBH(IClock? clock = null, IComponentCommunicator? comms = null)
     {
         _clock = clock ?? new SystemClock();
         lastread = _clock.UtcNow;
+
+        _comms = comms;
     }
 
     #endregion
@@ -90,6 +93,7 @@ public class ThermostatModelBH : IComponentModel
 
     private int skew = 0;
     private readonly IClock _clock;
+    private readonly IComponentCommunicator? _comms;
 
     /// <summary>
     /// Current synthetic temperature
@@ -117,6 +121,31 @@ public class ThermostatModelBH : IComponentModel
     private double tolerance = 5.0;
 
     private DateTimeOffset lastread = DateTimeOffset.MinValue;
+
+    #endregion
+
+    #region Internals
+
+    /// <summary>
+    /// Considering the rules for determining target temperature, what temp
+    /// should we target right NOW?
+    /// </summary>
+    /// <remarks>
+    /// Capable of throwing different exceptions. Be prepared!
+    /// </remarks>
+    /// <returns></returns>
+    private double CalculateTargetTemperature()
+    {
+        if (TargetComponent is not null && _comms is not null)
+        {
+            var strresult = _comms.GetMetricValueAsync(TargetComponent).Result;
+            return Convert.ToDouble(strresult);
+        }
+        else
+        {
+            return TargetTemperature;
+        }
+    }
 
     #endregion
 
@@ -156,12 +185,13 @@ public class ThermostatModelBH : IComponentModel
         lastread = now;
 
         // Open valve if too hot
-        if (temperature >= TargetTemperature + tolerance)
+        var target = CalculateTargetTemperature();
+        if (temperature >= target + tolerance)
         {
             IsOpen = true;
         }
         // Close valve if too cold
-        if (temperature <= TargetTemperature - tolerance)
+        if (temperature <= target - tolerance)
         {
             IsOpen = false;
         }
