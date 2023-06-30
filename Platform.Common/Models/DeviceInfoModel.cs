@@ -4,7 +4,7 @@
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 
-namespace BrewHub.Devices.Platform.Common;
+namespace BrewHub.Devices.Platform.Common.Models;
 
 /// <summary>
 /// Standardized implementation of "dtmi:azure:DeviceManagement:DeviceInformation;1"

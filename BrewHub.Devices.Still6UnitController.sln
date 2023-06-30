@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models.Synthetic.Tests.Unit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protocol.Mqtt", "Protocol.Mqtt\Protocol.Mqtt.csproj", "{10CAB7D1-24BE-4A79-B997-428B5B0D05DB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Platform.Common.Tests.Unit", "Platform.Common.Tests.Unit\Platform.Common.Tests.Unit.csproj", "{D0BA05F4-C5AA-4CED-815C-E19D9E7B5C05}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{10CAB7D1-24BE-4A79-B997-428B5B0D05DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10CAB7D1-24BE-4A79-B997-428B5B0D05DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10CAB7D1-24BE-4A79-B997-428B5B0D05DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0BA05F4-C5AA-4CED-815C-E19D9E7B5C05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0BA05F4-C5AA-4CED-815C-E19D9E7B5C05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0BA05F4-C5AA-4CED-815C-E19D9E7B5C05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0BA05F4-C5AA-4CED-815C-E19D9E7B5C05}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

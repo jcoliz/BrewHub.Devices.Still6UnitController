@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
 using System.Runtime.CompilerServices;
-using BrewHub.Devices.Platform.Common;
+using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Devices.Platform.Common.Clock;
 using System.Text.Json;
 using System.Text.Json.Serialization;

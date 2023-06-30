@@ -1,7 +1,7 @@
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
-namespace BrewHub.Devices.Platform.Common;
+namespace BrewHub.Devices.Platform.Common.Models;
 
 /// <summary>
 /// Implements a single IoT Plug-and-play model

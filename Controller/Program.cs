@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 
-using BrewHub.Devices.Platform.Common;
+using BrewHub.Devices.Platform.Common.Workers;
+using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Devices.Platform.Mqtt;
 using BrewHub.Controllers;
 
