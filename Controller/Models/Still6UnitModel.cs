@@ -24,8 +24,14 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
 
     public Still6UnitModel()
     {
-        // Condenser Thermostat has to be added here because needs reference to 'this'
-        Components.Add( new("ct",new ThermostatModelBH(null,new ComponentCommunicator(this))));
+        // "For now" just going to create one here. Could instead dependency-inject this,
+        // but that seems like overkill.
+        _comms = new ComponentCommunicator(this);
+
+        // Construct components here which need access to comms
+        Components.Add( new("ct",new ThermostatModelBH(null,_comms)));
+        Components.Add( new("cv",new BinaryValveModel(_comms)));
+        Components.Add( new("rv",new BinaryValveModel(_comms)));
 
         // TODO: Get working also on Linux
         //https://github.com/dotnet/orleans/blob/3.x/src/TelemetryConsumers/Orleans.TelemetryConsumers.Linux/LinuxEnvironmentStatistics.cs
@@ -132,6 +138,11 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
     }
     #endregion
 
+    #region Fields
+    private readonly IComponentCommunicator _comms;
+
+    #endregion
+
     #region IRootModel
 
     /// <summary>
@@ -152,14 +163,6 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
         {
             "rt", // Reflux Thermostat
             new ThermostatModelBH()
-        },
-        {
-            "cv", // Condenser Valve
-            new BinaryValveModel()
-        },
-        {
-            "rv", // Reflux Valve
-            new BinaryValveModel()
         }
     };
     #endregion
