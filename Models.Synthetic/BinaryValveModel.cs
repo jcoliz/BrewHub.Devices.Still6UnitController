@@ -52,6 +52,21 @@ public class BinaryValveModel :  IComponentModel
     #endregion
 
     #region Telemetry
+
+    public record Telemetry
+    {
+        /// <summary>
+        /// Whether the valve is open. Only writable if `Source Metric` is null
+        /// </summary>
+        /// <remarks>
+        /// Note that this is a bit of a hack. I am sending a property back
+        /// as telemetry. This will work, but I am making some assumptions about the
+        /// internal workings of the system which I really SHOULDN'T do here.
+        /// </remarks>
+        [JsonPropertyName("open")]
+        public bool IsOpen { get; set; }
+    }
+
     #endregion
 
     #region Commands
@@ -91,8 +106,9 @@ public class BinaryValveModel :  IComponentModel
             // OR could make this telemetry (perhaps better?)
         }
 
-        // Component does not generate telemetry
-        return null;
+        // Send back the property AS telemetry. This would not be needed if I could trigger
+        // a reported property update.
+        return new Telemetry() { IsOpen = this.IsOpen };
     }
 
     /// <summary>
