@@ -86,6 +86,9 @@ public class BinaryValveModel :  IComponentModel
             // Override IsOpen with source metric
             var strmetric = _comms.GetMetricValueAsync(SourceMetric).Result;
             IsOpen = Convert.ToBoolean(strmetric);
+            
+            // TODO: If this is a CHANGE, we need to trigger a reported property update
+            // OR could make this telemetry (perhaps better?)
         }
 
         // Component does not generate telemetry
@@ -126,6 +129,8 @@ public class BinaryValveModel :  IComponentModel
     {
         if (values.ContainsKey("sourceMetric"))
             SourceMetric = values["sourceMetric"];
+        if (values.ContainsKey("open"))
+            IsOpen = Convert.ToBoolean( values["open"] );
     }
 
     /// <summary>
