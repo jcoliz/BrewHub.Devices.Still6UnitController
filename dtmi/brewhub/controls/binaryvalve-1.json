@@ -1,0 +1,33 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:brewhub:controls:BinaryValve;1",
+    "@type": "Interface",
+    "displayName": "Binary Valve",
+    "description": "Controls a single two-state (on/off) valve.",
+    "contents": [
+        {
+            "@type": [
+                "Property"
+            ],
+            "name": "manual",
+            "schema": "boolean",
+            "displayName": {
+                "en": "Manual Control"
+            },
+            "description": "Override system contol",
+            "writable": true
+        },        
+        {
+            "@type": [
+                "Property",
+                "Dashboard"
+            ],
+            "name": "open",
+            "schema": "boolean",
+            "displayName": "Is Open",
+            "description": "Whether the valve is open. Only writable if `Manual Control` is turned on",
+            "writable": true,
+            "chartlevel": "component"
+        }
+    ]
+}

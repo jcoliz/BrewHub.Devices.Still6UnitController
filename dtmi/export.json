@@ -1,0 +1,440 @@
+[
+  {
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:brewhub:prototypes:still_6_unit;1",
+    "@type": "Interface",
+    "displayName": {
+      "en": "BrewHub 6-Unit Distillery Prototype v1"
+    },
+    "extends": "dtmi:brewhub:devices:BaseDevice;1",
+    "contents": [
+      {
+        "@type": [
+          "Component",
+          "Dashboard"
+        ],
+        "name": "amb",
+        "displayName": {
+          "en": "Ambient Conditions"
+        },
+        "schema": "dtmi:brewhub:sensors:TH;1",
+        "chartlevel": "device"
+      },
+      {
+        "@type": [
+          "Component",
+          "Dashboard"
+        ],
+        "name": "rt",
+        "displayName": {
+          "en": "Reflux Thermostat"
+        },
+        "schema": "dtmi:brewhub:controls:Thermostat;1",
+        "chartlevel": "solution"
+      },
+      {
+        "@type": [
+          "Component"
+        ],
+        "name": "rv",
+        "displayName": {
+          "en": "Reflux Valve"
+        },
+        "description": "Controls flow of reflux into top of rectifier column",
+        "schema": "dtmi:brewhub:controls:BinaryValve;1"
+      },
+      {
+        "@type": [
+          "Component",
+          "Dashboard"
+        ],
+        "name": "ct",
+        "displayName": {
+          "en": "Condenser Thermostat"
+        },
+        "schema": "dtmi:brewhub:controls:Thermostat;1",
+        "chartlevel": "solution"
+      },
+      {
+        "@type": [
+          "Component"
+        ],
+        "name": "cv",
+        "displayName": {
+          "en": "Condenser Valve"
+        },
+        "description": "Controls flow of cold water through condenser",
+        "schema": "dtmi:brewhub:controls:BinaryValve;1"
+      }
+    ]
+  },
+  {
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:brewhub:devices:BaseDevice;1",
+    "@type": "Interface",
+    "displayName": {
+      "en": "BrewHub Base Device v1"
+    },
+    "description": "Common metrics applicable to all devices. Extend this to add solution-specific metrics.",
+    "extends": "dtmi:azure:DeviceManagement:DeviceInformation;1",
+    "contents": [
+      {
+        "@type": [
+          "Telemetry",
+          "DataSize",
+          "Dashboard"
+        ],
+        "description": {
+          "en": "Current working set of the device memory in KiB."
+        },
+        "displayName": {
+          "en": "Current Working Set"
+        },
+        "name": "WorkingSet",
+        "schema": "double",
+        "unit": "kibibit",
+        "chartlevel": "component"
+      },
+      {
+        "@type": [
+          "Telemetry",
+          "Load",
+          "Dashboard"
+        ],
+        "name": "CpuLoad",
+        "description": {
+          "en": "Current CPU load."
+        },
+        "displayName": {
+          "en": "CPU Load"
+        },
+        "schema": "double",
+        "unit": "percent",
+        "chartlevel": "device"
+      },
+      {
+        "@type": [
+          "Telemetry",
+          "Status",
+          "Dashboard"
+        ],
+        "name": "Status",
+        "displayName": {
+          "en": "Status"
+        },
+        "description": "Zero is OK, >0 increasing severity to 999",
+        "schema": "integer",
+        "metriclevel": "solution"
+      },
+      {
+        "@type": [
+          "Property",
+          "Dashboard"
+        ],
+        "name": "TelemetryInterval",
+        "displayName": {
+          "en": "Telemetry Interval"
+        },
+        "writable": true,
+        "schema": "duration",
+        "description": "How frequently to send telemetry",
+        "metriclevel": "component"
+      },
+      {
+        "@type": "Property",
+        "displayName": {
+          "en": "Serial Number"
+        },
+        "name": "SerialNumber",
+        "schema": "string",
+        "writable": false
+      },
+      {
+        "@type": "Property",
+        "displayName": {
+          "en": "Start Time"
+        },
+        "name": "StartTime",
+        "description": "Time this device was last started (UTC)",
+        "schema": "dateTime",
+        "writable": false
+      },
+      {
+        "@type": "Command",
+        "commandType": "synchronous",
+        "description": {
+          "en": "Reboots the device after waiting the specified time."
+        },
+        "displayName": {
+          "en": "Restart Device"
+        },
+        "name": "reboot",
+        "request": {
+          "@type": "CommandPayload",
+          "displayName": {
+            "en": "Delay"
+          },
+          "description": {
+            "en": "How long to wait before rebooting the device."
+          },
+          "name": "delay",
+          "schema": "duration"
+        }
+      }
+    ]
+  },
+  {
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:brewhub:sensors:TH;1",
+    "@type": "Interface",
+    "displayName": {
+      "en": "Temp+Humidity"
+    },
+    "description": "Basic capabilities of a T&H sensor.",
+    "contents": [
+      {
+        "@type": [
+          "Telemetry",
+          "Temperature",
+          "Dashboard"
+        ],
+        "name": "t",
+        "schema": "double",
+        "displayName": {
+          "en": "Temperature"
+        },
+        "unit": "degreeCelsius",
+        "chartlevel": "solution"
+      },
+      {
+        "@type": [
+          "Telemetry",
+          "RelativeHumidity",
+          "Dashboard"
+        ],
+        "name": "h",
+        "schema": "double",
+        "displayName": {
+          "en": "Humidity"
+        },
+        "unit": "percent",
+        "chartlevel": "component"
+      },
+      {
+        "@type": [
+          "Property",
+          "Temperature",
+          "Dashboard"
+        ],
+        "name": "tcorr",
+        "schema": "double",
+        "displayName": {
+          "en": "Temperature Correction"
+        },
+        "description": "Correction value to apply for temperature readings",
+        "unit": "degreeCelsius",
+        "writable": true,
+        "metriclevel": "component"
+      },
+      {
+        "@type": [
+          "Property",
+          "RelativeHumidity",
+          "Dashboard"
+        ],
+        "name": "hcorr",
+        "schema": "double",
+        "displayName": {
+          "en": "Humidity Correction"
+        },
+        "description": "Correction value to apply for humidity readings",
+        "unit": "percent",
+        "writable": true,
+        "metriclevel": "component"
+      }
+    ]
+  },
+  {
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:brewhub:controls:Thermostat;1",
+    "@type": "Interface",
+    "displayName": "Thermostat",
+    "description": "Reports current temperature and provides desired temperature control.",
+    "contents": [
+      {
+        "@type": [
+          "Telemetry",
+          "Temperature",
+          "Dashboard"
+        ],
+        "name": "t",
+        "displayName": "Temperature",
+        "description": "Temperature in degrees Celsius.",
+        "schema": "double",
+        "unit": "degreeCelsius",
+        "chartlevel": "solution"
+      },
+      {
+        "@type": [
+          "Telemetry",
+          "Status"
+        ],
+        "name": "Status",
+        "displayName": {
+          "en": "Status"
+        },
+        "description": "Zero is OK, >0 increasing severity to 999",
+        "schema": "integer"
+      },
+      {
+        "@type": [
+          "Property",
+          "Temperature",
+          "Dashboard"
+        ],
+        "name": "tcorr",
+        "schema": "double",
+        "displayName": {
+          "en": "Temperature Correction"
+        },
+        "description": "Correction value to apply for temperature readings",
+        "unit": "degreeCelsius",
+        "writable": true,
+        "metriclevel": "component"
+      },
+      {
+        "@type": [
+          "Property",
+          "Temperature",
+          "Dashboard"
+        ],
+        "name": "targetTemp",
+        "schema": "double",
+        "displayName": "Target Temperature",
+        "description": "Specify the exact temperature to target.",
+        "unit": "degreeCelsius",
+        "writable": true,
+        "chartlevel": "component"
+      },
+      {
+        "@type": [
+          "Property",
+          "Charting"
+        ],
+        "name": "targetComp",
+        "schema": "string",
+        "displayName": "Target Component",
+        "description": "Specify a component whose temperature we target. Overrides targetTemp if set.",
+        "writable": true,
+        "chartlevel": "component"
+      },
+      {
+        "@type": [
+          "Property"
+        ],
+        "name": "cComp",
+        "schema": "string",
+        "displayName": "Control Component",
+        "description": "Which component we control, in trying to bring temperature to target",
+        "writable": true
+      }
+    ]
+  },
+  {
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:brewhub:controls:BinaryValve;1",
+    "@type": "Interface",
+    "displayName": "Binary Valve",
+    "description": "Controls a single two-state (on/off) valve.",
+    "contents": [
+      {
+        "@type": [
+          "Property"
+        ],
+        "name": "manual",
+        "schema": "boolean",
+        "displayName": {
+          "en": "Manual Control"
+        },
+        "description": "Override system contol",
+        "writable": true
+      },
+      {
+        "@type": [
+          "Property",
+          "Dashboard"
+        ],
+        "name": "open",
+        "schema": "boolean",
+        "displayName": "Is Open",
+        "description": "Whether the valve is open. Only writable if `Manual Control` is turned on",
+        "writable": true,
+        "chartlevel": "component"
+      }
+    ]
+  },
+  {
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:azure:DeviceManagement:DeviceInformation;1",
+    "@type": "Interface",
+    "displayName": "Device Information",
+    "contents": [
+      {
+        "@type": "Property",
+        "name": "manufacturer",
+        "displayName": "Manufacturer",
+        "schema": "string",
+        "description": "Company name of the device manufacturer. This could be the same as the name of the original equipment manufacturer (OEM). Ex. Contoso."
+      },
+      {
+        "@type": "Property",
+        "name": "model",
+        "displayName": "Device model",
+        "schema": "string",
+        "description": "Device model name or ID. Ex. Surface Book 2."
+      },
+      {
+        "@type": "Property",
+        "name": "swVersion",
+        "displayName": "Software version",
+        "schema": "string",
+        "description": "Version of the software on your device. This could be the version of your firmware. Ex. 1.3.45"
+      },
+      {
+        "@type": "Property",
+        "name": "osName",
+        "displayName": "Operating system name",
+        "schema": "string",
+        "description": "Name of the operating system on the device. Ex. Windows 10 IoT Core."
+      },
+      {
+        "@type": "Property",
+        "name": "processorArchitecture",
+        "displayName": "Processor architecture",
+        "schema": "string",
+        "description": "Architecture of the processor on the device. Ex. x64 or ARM."
+      },
+      {
+        "@type": "Property",
+        "name": "processorManufacturer",
+        "displayName": "Processor manufacturer",
+        "schema": "string",
+        "description": "Name of the manufacturer of the processor on the device. Ex. Intel."
+      },
+      {
+        "@type": "Property",
+        "name": "totalStorage",
+        "displayName": "Total storage",
+        "schema": "double",
+        "description": "Total available storage on the device in kilobytes. Ex. 2048000 kilobytes."
+      },
+      {
+        "@type": "Property",
+        "name": "totalMemory",
+        "displayName": "Total memory",
+        "schema": "double",
+        "description": "Total available memory on the device in kilobytes. Ex. 256000 kilobytes."
+      }
+    ]
+  }
+]

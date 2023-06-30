@@ -1,0 +1,71 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:brewhub:sensors:TH;1",
+    "@type": "Interface",
+    "displayName": {
+        "en": "Temp+Humidity"
+    },
+    "description": "Basic capabilities of a T&H sensor.",
+    "contents": [
+        {
+            "@type": [
+                "Telemetry",
+                "Temperature",
+                "Dashboard"
+            ],
+            "name": "t",
+            "schema": "double",
+            "displayName": {
+                "en": "Temperature"
+            },
+            "unit": "degreeCelsius",
+            "chartlevel": "solution"
+        },
+        {
+            "@type": [
+                "Telemetry",
+                "RelativeHumidity",
+                "Dashboard"
+            ],
+            "name": "h",
+            "schema": "double",
+            "displayName": {
+                "en": "Humidity"
+            },
+            "unit": "percent",
+            "chartlevel": "component"
+        },
+        {
+            "@type": [
+                "Property",
+                "Temperature",
+                "Dashboard"
+            ],
+            "name": "tcorr",
+            "schema": "double",
+            "displayName": {
+                "en": "Temperature Correction"
+            },
+            "description": "Correction value to apply for temperature readings",
+            "unit": "degreeCelsius",
+            "writable": true,
+            "metriclevel": "component"
+        },
+        {
+            "@type": [
+                "Property",
+                "RelativeHumidity",
+                "Dashboard"
+            ],
+            "name": "hcorr",
+            "schema": "double",
+            "displayName": {
+                "en": "Humidity Correction"
+            },
+            "description": "Correction value to apply for humidity readings",
+            "unit": "percent",
+            "writable": true,
+            "metriclevel": "component"
+        }
+    ]
+}

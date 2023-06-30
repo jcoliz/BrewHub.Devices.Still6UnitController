@@ -1,0 +1,69 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:brewhub:prototypes:still_6_unit;1",
+    "@type": "Interface",
+    "displayName": {
+        "en": "BrewHub 6-Unit Distillery Prototype v1"
+    },
+    "extends": "dtmi:brewhub:devices:BaseDevice;1",
+    "contents": [
+        {
+            "@type": [ 
+                "Component",
+                "Dashboard"
+            ],
+            "name": "amb",
+            "displayName": {
+                "en": "Ambient Conditions"
+            },
+            "schema": "dtmi:brewhub:sensors:TH;1",
+            "chartlevel": "device"
+        },
+        {
+            "@type": [ 
+                "Component",
+                "Dashboard"
+            ],
+            "name": "rt",
+            "displayName": {
+                "en": "Reflux Thermostat"
+            },
+            "schema": "dtmi:brewhub:controls:Thermostat;1",
+            "chartlevel": "solution"
+        },
+        {
+            "@type": [ 
+                "Component"
+            ],
+            "name": "rv",
+            "displayName": {
+                "en": "Reflux Valve"
+            },
+            "description": "Controls flow of reflux into top of rectifier column",
+            "schema": "dtmi:brewhub:controls:BinaryValve;1"
+        },
+        {
+            "@type": [ 
+                "Component",
+                "Dashboard"
+            ],
+            "name": "ct",
+            "displayName": {
+                "en": "Condenser Thermostat"
+            },
+            "schema": "dtmi:brewhub:controls:Thermostat;1",
+            "chartlevel": "solution"
+        },
+        {
+            "@type": [ 
+                "Component"
+            ],
+            "name": "cv",
+            "displayName": {
+                "en": "Condenser Valve"
+            },
+            "description": "Controls flow of cold water through condenser",
+            "schema": "dtmi:brewhub:controls:BinaryValve;1"
+        }
+    ]
+}

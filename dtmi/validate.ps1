@@ -1,0 +1,1 @@
+dmr-client validate --directory . -r ..

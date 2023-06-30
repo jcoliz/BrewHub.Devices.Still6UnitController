@@ -1,0 +1,117 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:brewhub:devices:BaseDevice;1",
+    "@type": "Interface",
+    "displayName": {
+        "en": "BrewHub Base Device v1"
+    },
+    "description": "Common metrics applicable to all devices. Extend this to add solution-specific metrics.",
+    "extends": "dtmi:azure:DeviceManagement:DeviceInformation;1",
+    "contents": [
+        {
+            "@type": [
+              "Telemetry",
+              "DataSize",
+              "Dashboard"
+            ],
+            "description": {
+              "en": "Current working set of the device memory in KiB."
+            },
+            "displayName": {
+              "en": "Current Working Set"
+            },
+            "name": "WorkingSet",
+            "schema": "double",
+            "unit": "kibibit",
+            "chartlevel": "component"
+        },
+        {
+            "@type": [
+              "Telemetry",
+              "Load",
+              "Dashboard"
+            ],
+            "name": "CpuLoad",
+            "description": {
+              "en": "Current CPU load."
+            },
+            "displayName": {
+              "en": "CPU Load"
+            },
+            "schema": "double",
+            "unit": "percent",        
+            "chartlevel": "device"
+        },
+        {
+          "@type":
+          [
+            "Telemetry",
+            "Status",
+            "Dashboard"
+          ],
+          "name": "Status",
+          "displayName": {
+              "en": "Status"
+            }, 
+          "description": "Zero is OK, >0 increasing severity to 999",
+          "schema": "integer",
+          "metriclevel": "solution"
+        },
+        {
+            "@type":
+            [
+              "Property",
+              "Dashboard"
+            ],
+            "name": "TelemetryInterval",
+            "displayName": {
+                "en": "Telemetry Interval"
+              },
+            "writable": true,
+            "schema": "duration",
+            "description": "How frequently to send telemetry",
+            "metriclevel": "component"
+        },
+        {
+            "@type": "Property",
+            "displayName": {
+              "en": "Serial Number"
+            },
+            "name": "SerialNumber",
+            "schema": "string",
+            "writable": false
+        },
+        {
+            "@type": "Property",
+            "displayName": {
+              "en": "Start Time"
+            },
+            "name": "StartTime",
+            "description": "Time this device was last started (UTC)",
+            "schema": "dateTime",
+            "writable": false
+        },
+        {
+            "@type": "Command",
+            "commandType": "synchronous",
+            "description": {
+              "en": "Reboots the device after waiting the specified time."
+            },
+            "displayName": {
+              "en": "Restart Device"
+            },
+            "name": "reboot",
+            "request": {
+              "@type": "CommandPayload",
+              "displayName": {
+                "en": "Delay"
+              },
+              "description": {
+                "en": "How long to wait before rebooting the device."
+              },
+              "name": "delay",
+              "schema": "duration"
+            }
+          }
+    ]
+}

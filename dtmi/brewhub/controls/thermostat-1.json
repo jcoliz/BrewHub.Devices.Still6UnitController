@@ -1,0 +1,87 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:brewhub:controls:Thermostat;1",
+    "@type": "Interface",
+    "displayName": "Thermostat",
+    "description": "Reports current temperature and provides desired temperature control.",
+    "contents": [
+        {
+            "@type": [
+                "Telemetry",
+                "Temperature",
+                "Dashboard"
+            ],
+            "name": "t",
+            "displayName": "Temperature",
+            "description": "Temperature in degrees Celsius.",
+            "schema": "double",
+            "unit": "degreeCelsius",
+            "chartlevel": "solution"
+        },
+        {
+            "@type":
+            [
+              "Telemetry",
+              "Status"
+            ],
+            "name": "Status",
+            "displayName": {
+                "en": "Status"
+              },
+            "description": "Zero is OK, >0 increasing severity to 999",
+            "schema": "integer"
+        },
+        {
+            "@type": [
+                "Property",
+                "Temperature",
+                "Dashboard"
+            ],
+            "name": "tcorr",
+            "schema": "double",
+            "displayName": {
+                "en": "Temperature Correction"
+            },
+            "description": "Correction value to apply for temperature readings",
+            "unit": "degreeCelsius",
+            "writable": true,
+            "metriclevel": "component"
+        },
+        {
+            "@type": [
+                "Property",
+                "Temperature",
+                "Dashboard"
+            ],
+            "name": "targetTemp",
+            "schema": "double",
+            "displayName": "Target Temperature",
+            "description": "Specify the exact temperature to target.",
+            "unit": "degreeCelsius",
+            "writable": true,
+            "chartlevel": "component"
+        },
+        {
+            "@type": [
+                "Property",
+                "Charting"
+            ],
+            "name": "targetComp",
+            "schema": "string",
+            "displayName": "Target Component",
+            "description": "Specify a component whose temperature we target. Overrides targetTemp if set.",
+            "writable": true,
+            "chartlevel": "component"
+        },
+        {
+            "@type": [
+                "Property"
+            ],
+            "name": "cComp",
+            "schema": "string",
+            "displayName": "Control Component",
+            "description": "Which component we control, in trying to bring temperature to target",
+            "writable": true
+        }
+    ]
+}
