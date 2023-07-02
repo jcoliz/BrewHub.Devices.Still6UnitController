@@ -4,6 +4,8 @@
 using BrewHub.Devices.Platform.Common.Comms;
 using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Controllers.Models.Synthetic;
+using BrewHub.Controllers.Models.Modbus;
+using BrewHub.Controllers.Models.Modbus.Client;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml;
@@ -22,16 +24,14 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
 {
     #region Constructor
 
-    public Still6UnitModel()
+    public Still6UnitModel(IModbusClient client, ILoggerFactory logfact)
     {
+        _modbusclient = client;
+        _logfact = logfact;
+
         // "For now" just going to create one here. Could instead dependency-inject this,
         // but that seems like overkill.
         _comms = new ComponentCommunicator(this);
-
-        // Construct components here which need access to comms
-        Components.Add( new("ct",new ThermostatModelBH(null,_comms)));
-        Components.Add( new("cv",new BinaryValveModel(_comms)));
-        Components.Add( new("rv",new BinaryValveModel(_comms)));
 
         // TODO: Get working also on Linux
         //https://github.com/dotnet/orleans/blob/3.x/src/TelemetryConsumers/Orleans.TelemetryConsumers.Linux/LinuxEnvironmentStatistics.cs
@@ -140,7 +140,8 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
 
     #region Fields
     private readonly IComponentCommunicator _comms;
-
+    private readonly IModbusClient _modbusclient;
+    private readonly ILoggerFactory _logfact;
     #endregion
 
     #region IRootModel
@@ -154,17 +155,7 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
     /// The components which are contained within this one
     /// </summary>
     [JsonIgnore]
-    public IDictionary<string, IComponentModel> Components { get; } = new Dictionary<string, IComponentModel>()
-    {
-        {
-            "amb", // Ambient Environment
-            new TempHumidityModel()
-        },
-        {
-            "rt", // Reflux Thermostat
-            new ThermostatModelBH()
-        }
-    };
+    public IDictionary<string, IComponentModel> Components { get; } = new Dictionary<string, IComponentModel>();
     #endregion
 
     #region Internals
@@ -241,6 +232,111 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
         {
             // TODO: Pass it along to the components generating synthetic data
         }
+
+        //
+        // Create components
+        //
+
+        // Components are configurable via Initial State. The default for all components
+        // is to generate synthetic data. Alternately, send "{componentid}=false" to disable,
+        // or "{componentid}={classname}" to select another model.
+        var needmodbus = false;
+
+        object? CheckComponent(string c)
+        {
+            if (values.TryGetValue(c,out var value))
+            {
+                if (Boolean.TryParse(value, out var bval))
+                    return bval;
+                else
+                    return value;
+            }
+            else
+                return null;
+        }
+
+        switch (CheckComponent("amb"))
+        {
+            case true:
+                Components["amb"] = new TempHumidityModel(null);
+                break;
+
+            case nameof(SonbestSm7820Model):
+                Components["amb"] = new SonbestSm7820Model(_modbusclient,_logfact);
+                needmodbus = true;
+                break;
+
+            case null:
+            case false:
+                // No action
+                break;
+
+            default:
+                throw new ApplicationException($"Component type not recognized for amb");
+        }
+
+        switch (CheckComponent("ct"))
+        {
+            case true:
+                Components["ct"] = new ThermostatModelBH(null,_comms);
+                break;
+
+            case null:
+            case false:
+                // No action
+                break;
+
+            default:
+                throw new ApplicationException($"Component type not recognized for ct");
+        }
+
+        switch (CheckComponent("rt"))
+        {
+            case true:
+                Components["rt"] = new ThermostatModelBH(null,_comms);
+                break;
+
+            case null:
+            case false:
+                // No action
+                break;
+
+            default:
+                throw new ApplicationException($"Component type not recognized for rt");
+        }
+
+        switch (CheckComponent("cv"))
+        {
+            case true:
+                Components["cv"] = new BinaryValveModel(_comms);
+                break;
+
+            case null:
+            case false:
+                // No action
+                break;
+
+            default:
+                throw new ApplicationException($"Component type not recognized for cv");
+        }
+
+        switch (CheckComponent("rv"))
+        {
+            case true:
+                Components["rv"] = new BinaryValveModel(_comms);
+                break;
+
+            case null:
+            case false:
+                // No action
+                break;
+
+            default:
+                throw new ApplicationException($"Component type not recognized for rv");
+        }
+
+        if (needmodbus)
+            _modbusclient.Connect();
 
         // Pass along initial state to the base class
         base.SetInitialState(values);

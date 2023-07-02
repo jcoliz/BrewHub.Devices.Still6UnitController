@@ -37,23 +37,13 @@ public class ModbusClient : IModbusClient
 
         try
         {
-            _logger.LogDebug(ModbusLogEvents.ModbusCreating, "Creating with options {options}", _options.Value);
-
-            // Default is 9600
-            if (_options.Value.BaudRate.HasValue)
-                _client.BaudRate = _options.Value.BaudRate.Value;
-
-            // Default is Even
-            if (_options.Value.Parity is not null)
-                _client.Parity = Enum.Parse<Parity>(_options.Value.Parity);
-
-            // Default is One
-            if (_options.Value.StopBits is not null)
-                _client.StopBits = Enum.Parse<StopBits>(_options.Value.StopBits);
-
-            // Default is 1000 (milliseconds)
-            if (_options.Value.ReadTimeout.HasValue)
-                _client.ReadTimeout = _options.Value.ReadTimeout.Value;
+            _logger.LogInformation(ModbusLogEvents.ModbusCreating, "Creating with options {options}", _options.Value);
+    
+            _client.BaudRate = _options.Value.BaudRate;
+            _client.Parity = _options.Value.Parity;
+            _client.StopBits = _options.Value.StopBits;
+            _client.ReadTimeout = (int)_options.Value.ReadTimeoutTimeSpan.TotalMilliseconds;
+            _client.WriteTimeout = (int)_options.Value.WriteTimeoutTimeSpan.TotalMilliseconds;
 
             // TODO: Allow config of write timeout
 

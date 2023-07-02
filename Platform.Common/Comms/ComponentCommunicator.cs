@@ -65,6 +65,9 @@ public class ComponentCommunicator: IComponentCommunicator
         {
             // Not a property, try telemetry
             var telem = component.GetTelemetry();
+            if (telem is null)
+                throw new ApplicationException($"Metric {metric} not found on component {componentid} ({component}). Returned empty telemetry.");
+
             json = System.Text.Json.JsonSerializer.Serialize(telem);
             dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string,object>>(json);
             if (dict!.ContainsKey(metric))
@@ -74,7 +77,7 @@ public class ComponentCommunicator: IComponentCommunicator
             else
             {
                 // Not a property, or telemetry
-                throw new ApplicationException($"Metric {metric} not found on component {component}");
+                throw new ApplicationException($"Metric {metric} not found on component {componentid} ({component})");
             }
         }
     }

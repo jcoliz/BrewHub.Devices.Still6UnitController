@@ -84,10 +84,12 @@ public class SonbestSm7820Model :  IComponentModel
     #endregion
 
     #region Constructor
-    public SonbestSm7820Model(IModbusClient client, ILogger logger)
+    public SonbestSm7820Model(IModbusClient client, ILoggerFactory logfact)
     {
         _client = client;
-        _logger = logger;
+
+        // For more compact logs, only use the class name itself, NOT fully-qualified class name
+        _logger = logfact.CreateLogger(nameof(SonbestSm7820Model));
     }
     #endregion
 
