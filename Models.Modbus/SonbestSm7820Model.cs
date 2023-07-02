@@ -23,34 +23,7 @@ public class SonbestSm7820Model :  IComponentModel
     [JsonPropertyName("__t")]
     public string ComponentID => "c";
 
-    /// <summary>
-    /// Location on Modbus where this sensor is to be found
-    /// </summary>
-    public int Address { get; private set; }
-
-    /// <summary>
-    /// Code for this particular sensor model
-    /// </summary>
-    public int ModelCode => 
-        UartOK switch
-        {
-            true => _client!.ReadHoldingRegisters<Int16>(Address, ModelCodeRegister, 1).ToArray()[0],
-            false => -1
-        };
-
-    /// <summary>
-    /// Bus speed currently expected by this device
-    /// </summary>
-    /// <remarks>
-    /// This is an enum. The DTMI knows how to handle it. We do not allow changing it, because that seems dangerous
-    /// </remarks>
-    public int BaudRate => 
-        UartOK switch
-        {
-            true => _client!.ReadHoldingRegisters<Int16>(Address, BaudRateRegister, 1).ToArray()[0],
-            false => -1
-        };
-
+    [JsonPropertyName("tcorr")]
     public double TemperatureCorrection
     { 
         get
@@ -71,6 +44,7 @@ public class SonbestSm7820Model :  IComponentModel
         }
     }
 
+    [JsonPropertyName("hcorr")]
     public double HumidityCorrection 
     { 
         get
@@ -91,18 +65,16 @@ public class SonbestSm7820Model :  IComponentModel
         }
     }
 
-    public double CurrentTemperature { get; private set; }
-
-    public double CurrentHumidity { get; private set; }
-
     #endregion
 
     #region Telemetry
 
     public class Telemetry
     {
+        [JsonPropertyName("t")]
         public double Temperature { get; set; }
 
+        [JsonPropertyName("h")]
         public double Humidity { get; set; }
     }
 
@@ -148,6 +120,38 @@ public class SonbestSm7820Model :  IComponentModel
     private bool UartOK => _client.IsConnected && Address > 0;
     #endregion
 
+    #region Internals
+
+    /// <summary>
+    /// Location on Modbus where this sensor is to be found
+    /// </summary>
+    internal int Address { get; private set; }
+
+    /// <summary>
+    /// Code for this particular sensor model
+    /// </summary>
+    internal int ModelCode => 
+        UartOK switch
+        {
+            true => _client!.ReadHoldingRegisters<Int16>(Address, ModelCodeRegister, 1).ToArray()[0],
+            false => -1
+        };
+
+    /// <summary>
+    /// Bus speed currently expected by this device
+    /// </summary>
+    /// <remarks>
+    /// This is an enum. The DTMI knows how to handle it. We do not allow changing it, because that seems dangerous
+    /// </remarks>
+    internal int BaudRate => 
+        UartOK switch
+        {
+            true => _client!.ReadHoldingRegisters<Int16>(Address, BaudRateRegister, 1).ToArray()[0],
+            false => -1
+        };
+
+    #endregion
+
     #region ModBus Registers
     const int FirstDataRegister = 0;
     const int TemperatureRegister = 0;
@@ -166,7 +170,7 @@ public class SonbestSm7820Model :  IComponentModel
     /// Identifier for the model implemented here
     /// </summary>
     [JsonIgnore]
-    public string dtmi => "dtmi:azdevice:sonbest_sm7820;1";
+    public string dtmi => "dtmi:brewhub:sensors:TH;1";
 
     /// <summary>
     /// Get an object containing all current telemetry
@@ -187,10 +191,6 @@ public class SonbestSm7820Model :  IComponentModel
             Humidity = (double)inputs[HumidityRegister - FirstDataRegister] / 100.0
         };
 
-        // Update the properties which track the current values
-        CurrentHumidity = reading.Humidity;
-        CurrentTemperature = reading.Temperature;
-
         // Return it
         return reading;
     }
@@ -203,10 +203,10 @@ public class SonbestSm7820Model :  IComponentModel
     /// <returns>The unserialized new value of the property</returns>
     object IComponentModel.SetProperty(string key, string jsonvalue)
     {
-        if (key == "TemperatureCorrection")
+        if (key == "tcorr")
             return TemperatureCorrection = Convert.ToDouble(jsonvalue);
 
-        if (key == "HumidityCorrection")
+        if (key == "hcorr")
             return HumidityCorrection = Convert.ToDouble(jsonvalue);
 
         throw new NotImplementedException($"Property {key} is not implemented on {dtmi}");

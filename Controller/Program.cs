@@ -4,16 +4,21 @@ using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Devices.Platform.Mqtt;
 using BrewHub.Protocol.Mqtt;
 using BrewHub.Controllers;
+using BrewHub.Controllers.Models.Modbus.Client;
 
 using IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices((hostContext, services) =>
+    .ConfigureServices((context, services) =>
     {
         services.AddHostedService<MqttWorker>();
         services.AddSingleton<IRootModel,Still6UnitModel>();
+        services.AddSingleton<IModbusClient, ModbusClient>();
 
-        var section = hostContext.Configuration.GetSection(MqttOptions.Section);
-        if (section.Exists())
-            services.Configure<MqttOptions>(section);
+        services.Configure<MqttOptions>(
+            context.Configuration.GetSection(MqttOptions.Section)
+        );
+        services.Configure<ModbusClientOptions>(
+            context.Configuration.GetSection(ModbusClientOptions.Section)
+        );
     })
     .ConfigureAppConfiguration(config =>
     {
