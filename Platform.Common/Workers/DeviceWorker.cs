@@ -128,6 +128,14 @@ public abstract class DeviceWorker : BackgroundService
                     numkeys += dictionary.Keys.Count;
                 }
 
+                var components = initialstate.GetSection("Components");
+                if (components.Exists())
+                {
+                    var value = String.Join(',',components.GetChildren().Select(x => $"{x.Key}={x.Value}"));
+                    _model.SetInitialState(new Dictionary<string,string>() { { "Components", value }});
+                    numkeys += 1;
+                }
+
                 foreach(var component in _model.Components)
                 {
                     var section = initialstate.GetSection(component.Key);

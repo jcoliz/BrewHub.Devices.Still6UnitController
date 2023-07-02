@@ -213,6 +213,59 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
         return this as Still6UnitModel;
     }
 
+    private void SetConfiguration(string config)
+    {
+        object From(string value)
+        {
+            if (Boolean.TryParse(value, out var bval))
+                return bval;
+            else
+                return value;            
+        }
+
+        var needmodbus = false;
+
+        foreach( var kvp in config.Split(',').Select(x=>x.Split('=')).ToDictionary(x=>x[0],x=>From(x[1])) )
+        {
+            switch (kvp)
+            {
+                case { Key: "amb", Value: true }:
+                    Components["amb"] = new TempHumidityModel(null);
+                    break;
+
+                case { Key: "amb", Value: nameof(SonbestSm7820Model) }:
+                    Components["amb"] = new SonbestSm7820Model(_modbusclient,_logfact);
+                    needmodbus = true;
+                    break;
+
+                case { Key: "ct", Value: true }:
+                    Components["ct"] = new ThermostatModelBH(null,_comms);
+                    break;
+
+                case { Key: "rt", Value: true }:
+                    Components["rt"] = new ThermostatModelBH(null,_comms);
+                    break;
+
+                case { Key: "cv", Value: true }:
+                    Components["cv"] = new BinaryValveModel(_comms);
+                    break;
+
+                case { Key: "rv", Value: true }:
+                    Components["rv"] = new BinaryValveModel(_comms);
+                    break;
+
+                case { Value: false }:
+                    break;
+
+                default:
+                    throw new ApplicationException($"Component not recognized {kvp.Key}={kvp.Value}");
+            }
+        }
+
+        if (needmodbus)
+            _modbusclient.Connect();
+    }
+
     /// <summary>
     /// Set the application intitial state from the supplied configuration values
     /// </summary>
@@ -228,115 +281,8 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
         if (values.ContainsKey("TelemetryPeriod"))
             TelemetryInterval = values["TelemetryPeriod"];
 
-        if (values.ContainsKey("Skew"))
-        {
-            // TODO: Pass it along to the components generating synthetic data
-        }
-
-        //
-        // Create components
-        //
-
-        // Components are configurable via Initial State. The default for all components
-        // is to generate synthetic data. Alternately, send "{componentid}=false" to disable,
-        // or "{componentid}={classname}" to select another model.
-        var needmodbus = false;
-
-        object? CheckComponent(string c)
-        {
-            if (values.TryGetValue(c,out var value))
-            {
-                if (Boolean.TryParse(value, out var bval))
-                    return bval;
-                else
-                    return value;
-            }
-            else
-                return null;
-        }
-
-        switch (CheckComponent("amb"))
-        {
-            case true:
-                Components["amb"] = new TempHumidityModel(null);
-                break;
-
-            case nameof(SonbestSm7820Model):
-                Components["amb"] = new SonbestSm7820Model(_modbusclient,_logfact);
-                needmodbus = true;
-                break;
-
-            case null:
-            case false:
-                // No action
-                break;
-
-            default:
-                throw new ApplicationException($"Component type not recognized for amb");
-        }
-
-        switch (CheckComponent("ct"))
-        {
-            case true:
-                Components["ct"] = new ThermostatModelBH(null,_comms);
-                break;
-
-            case null:
-            case false:
-                // No action
-                break;
-
-            default:
-                throw new ApplicationException($"Component type not recognized for ct");
-        }
-
-        switch (CheckComponent("rt"))
-        {
-            case true:
-                Components["rt"] = new ThermostatModelBH(null,_comms);
-                break;
-
-            case null:
-            case false:
-                // No action
-                break;
-
-            default:
-                throw new ApplicationException($"Component type not recognized for rt");
-        }
-
-        switch (CheckComponent("cv"))
-        {
-            case true:
-                Components["cv"] = new BinaryValveModel(_comms);
-                break;
-
-            case null:
-            case false:
-                // No action
-                break;
-
-            default:
-                throw new ApplicationException($"Component type not recognized for cv");
-        }
-
-        switch (CheckComponent("rv"))
-        {
-            case true:
-                Components["rv"] = new BinaryValveModel(_comms);
-                break;
-
-            case null:
-            case false:
-                // No action
-                break;
-
-            default:
-                throw new ApplicationException($"Component type not recognized for rv");
-        }
-
-        if (needmodbus)
-            _modbusclient.Connect();
+        if (values.TryGetValue("Components",out var value))
+            SetConfiguration(value);
 
         // Pass along initial state to the base class
         base.SetInitialState(values);
