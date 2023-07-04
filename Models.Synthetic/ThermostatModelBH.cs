@@ -164,7 +164,10 @@ public class ThermostatModelBH : IComponentModel
         var now = _clock.UtcNow;
 
         // Measure the time since last reading
-        double elapsed = (now - lastread).TotalSeconds;
+        // Bug 1635: Synthetic model corrupted on restart. 
+        // Fix: Limit the max elapsed time to something pretty short 
+        const double maxelapsed = 30.0;
+        double elapsed = Math.Min((now - lastread).TotalSeconds,maxelapsed);
 
         // Determine the current acceleration
         var accel = IsOverTemp ? coldaccel : hotaccel;

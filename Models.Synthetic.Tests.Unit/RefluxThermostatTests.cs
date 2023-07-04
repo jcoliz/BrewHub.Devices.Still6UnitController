@@ -235,6 +235,31 @@ public class RefluxThermostatTests
     }
 
     /// <summary>
+    /// Bug 1635: Synthetic model corrupted on restart
+    /// </summary>
+    /// <remarks>
+    /// If it has been a long time since the last data point, let's ensure we
+    /// don't put up wildly ridiculous temp values
+    /// </remarks>
+    [Test]
+    public void LongDelay()
+    {
+        // Given: Model has already started and has been running for some time
+        ValveOpens();
+
+        // When: Three hours have passed
+        var time = TimeSpan.FromHours(3);
+        clock.UtcNow += time;
+
+        // And: Getting Telemetry
+        var actual = component.GetTelemetry() as ThermostatModelBH.Telemetry;
+
+        // Then: Telemetry is still a "reasonable" value
+        var reasonable = 100.0;
+        Assert.That(actual!.Temperature,Is.LessThanOrEqualTo(reasonable));
+    }
+
+    /// <summary>
     /// Scenario: Valve component comes on when our IsOpen is  on
     /// </summary>
     public void ValveComponentOn()
