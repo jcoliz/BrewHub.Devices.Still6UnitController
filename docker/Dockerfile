@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build-env
 WORKDIR /app
 
+RUN mkdir -p Controller
 COPY Controller/*.csproj Controller
 RUN dotnet restore Controller
 
@@ -10,7 +11,7 @@ RUN dotnet restore Controller
 ARG SOLUTION_VERSION=docker
 
 COPY . ./
-RUN rm -f config.toml || true
+RUN rm -f Controller/config.toml || true
 RUN dotnet publish -c Release -o out
 
 FROM mcr.microsoft.com/dotnet/runtime:7.0
