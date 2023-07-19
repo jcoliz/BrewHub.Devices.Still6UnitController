@@ -1,2 +1,2 @@
 #!/bin/bash
-systemctl stop i2cthm || true
+systemctl stop ctrl6u || true
