@@ -8,6 +8,7 @@ using BrewHub.Controllers;
 using BrewHub.Controllers.Models.Modbus.Client;
 
 using IHost host = Host.CreateDefaultBuilder(args)
+    .UseSystemd() 
     .ConfigureServices((context, services) =>
     {
         services.AddHostedService<MqttWorker>();
