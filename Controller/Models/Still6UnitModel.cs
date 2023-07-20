@@ -223,6 +223,11 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
                     needmodbus = true;
                     break;
 
+                case { Key: "amb", Value: nameof(Xymd02Model) }:
+                    Components["amb"] = new Xymd02Model(_modbusclient,_logfact);
+                    needmodbus = true;
+                    break;
+
                 case { Key: "ct", Value: true }:
                     Components["ct"] = new ThermostatModelBH(null,_comms);
                     break;
