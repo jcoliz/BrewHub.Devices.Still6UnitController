@@ -72,3 +72,4 @@ This controller ultimately will connect to physical sensors to send true data. I
 ## Running on Microcontrollers
 
 The BrewHub.Net stack requires very few resources. As a future project, I'll demonstrate running this on an Espressif MCU-based device. Stay tuned!
+
