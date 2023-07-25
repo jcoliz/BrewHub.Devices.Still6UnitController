@@ -32,6 +32,17 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
         // "For now" just going to create one here. Could instead dependency-inject this,
         // but that seems like overkill.
         _comms = new ComponentCommunicator(this);
+
+        // TODO: Get working also on Linux
+        //https://github.com/dotnet/orleans/blob/3.x/src/TelemetryConsumers/Orleans.TelemetryConsumers.Linux/LinuxEnvironmentStatistics.cs
+
+        if ( RuntimeInformation.IsOSPlatform(OSPlatform.Windows) )
+        {
+            _cpuCounter = new PerformanceCounter();
+            _cpuCounter.CategoryName = "Processor";
+            _cpuCounter.CounterName = "% Processor Time";
+            _cpuCounter.InstanceName = "_Total";
+        }
     }
 
     #endregion
@@ -167,11 +178,15 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
     /// <returns>All telemetry we wish to send at this time, or null for don't send any</returns>
     object? IComponentModel.GetTelemetry()
     {
-        // Give the base a change to use the CPU
-        var _ = base.GetTelemetry();
+        var reading = new Telemetry();
 
-        // Grab the CPU load from the base class, return it
-        var reading = new Telemetry() { CpuLoad = base.AveragePercentProcessorTime };
+        //https://github.com/dotnet/orleans/blob/3.x/src/TelemetryConsumers/Orleans.TelemetryConsumers.Linux/LinuxEnvironmentStatistics.cs
+        #pragma warning disable CA1416
+        if (_cpuCounter is not null)
+            reading.CpuLoad = _cpuCounter.NextValue();
+        #pragma warning restore CA1416
+
+        // Take the reading, return it
         return reading;
     }
 
