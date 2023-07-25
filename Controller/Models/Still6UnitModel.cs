@@ -142,6 +142,8 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
     private readonly IComponentCommunicator _comms;
     private readonly IModbusClient _modbusclient;
     private readonly ILoggerFactory _logfact;
+
+    private int _telemetryCounter = 0;
     #endregion
 
     #region IRootModel
@@ -182,12 +184,32 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
 
         //https://github.com/dotnet/orleans/blob/3.x/src/TelemetryConsumers/Orleans.TelemetryConsumers.Linux/LinuxEnvironmentStatistics.cs
         #pragma warning disable CA1416
-        if (_cpuCounter is not null)
-            reading.CpuLoad = _cpuCounter.NextValue();
+        if ( RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            reading.CpuLoad = _cpuCounter!.NextValue();
+        }
+        else if ( RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            // Don't want to open this up every single telemetry interval
+            if ( _telemetryCounter++ % 10 == 0)
+                reading.CpuLoad = GetCpuLoadLinux();
+        }
+        // else OSX or FreeBSD which I have not tested this on
+
         #pragma warning restore CA1416
 
         // Take the reading, return it
         return reading;
+    }
+
+    private double GetCpuLoadLinux()
+    {
+        var reader = File.OpenText("/proc/loadavg");
+        var line = reader.ReadLine();
+        var split = line!.Split(" ");
+        var result = 100.0 * Convert.ToDouble(split[0]);
+
+        return result;
     }
 
     /// <summary>
