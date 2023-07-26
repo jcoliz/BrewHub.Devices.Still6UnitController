@@ -65,7 +65,7 @@ public class RefluxThermostatTests
         component.SetInitialState(state);
 
         // When: {time} has passed since system start
-        var time = TimeSpan.FromSeconds(10);
+        var time = TimeSpan.FromSeconds(9);
         clock.UtcNow += time;
 
         // And: Getting Telemetry
@@ -97,14 +97,24 @@ public class RefluxThermostatTests
         component.SetInitialState(state);
 
         // When: Sufficient time has passed, such that Temperature exceeds Target property by {tolerance}
-        var time = TimeSpan.FromSeconds(24);
-        clock.UtcNow += time;
+        clock.UtcNow += TimeSpan.FromSeconds(9);
+        component.GetTelemetry();
+        clock.UtcNow += TimeSpan.FromSeconds(9);
+        component.GetTelemetry();
+        clock.UtcNow += TimeSpan.FromSeconds(9);
+        component.GetTelemetry();
+        clock.UtcNow += TimeSpan.FromSeconds(9);
+        component.GetTelemetry();
+        clock.UtcNow += TimeSpan.FromSeconds(9);
+        component.GetTelemetry();
+        clock.UtcNow += TimeSpan.FromSeconds(4);
 
         // And: Getting telemetry (which is needed to give the model a slide of CPU to work in)
-        component.GetTelemetry();
+        // (Also we want to print out details in case of failure)
+        var t = component.GetTelemetry() as ThermostatModelBH.Telemetry;
 
         // Then: Thermostat opens reflux valve
-        Assert.That(model.IsOverTemp,Is.True);
+        Assert.That(model.IsOverTemp,Is.True,$"Current temp: {t!.Temperature}");
     }
 
     /// <summary>
@@ -129,7 +139,7 @@ public class RefluxThermostatTests
         var velocity = model.velocity;
 
         // When: More {time} has passed
-        var time = TimeSpan.FromSeconds(20);
+        var time = TimeSpan.FromSeconds(5);
         clock.UtcNow += time;
 
         // And: Getting Telemetry
@@ -162,14 +172,14 @@ public class RefluxThermostatTests
         var velocity = model.velocity;
 
         // When: Sufficient time has passed, such that Temperature falls below Target property by {tolerance}
-        var time = TimeSpan.FromSeconds(22);
-        clock.UtcNow += time;
+        clock.UtcNow += TimeSpan.FromSeconds(9);
 
         // And: Getting telemetry (which is needed to give the model a slide of CPU to work in)
-        component.GetTelemetry();
+        // (Also we want to print out details in case of failure)
+        var t = component.GetTelemetry() as ThermostatModelBH.Telemetry;
 
         // And: Temperature has gone below the threshold
-        Assert.That(model.temperature,Is.LessThan(75.0));
+        Assert.That(t!.Temperature,Is.LessThan(75.0));
 
         // Then: Thermostat opens reflux valve
         Assert.That(model.IsOverTemp,Is.False);
@@ -222,8 +232,17 @@ public class RefluxThermostatTests
         component.SetInitialState(state);
 
         // When: Sufficient time has passed, such that Temperature exceeds {targetprop} by {tolerance}
-        var time = TimeSpan.FromSeconds(13);
-        clock.UtcNow += time;
+        clock.UtcNow += TimeSpan.FromSeconds(9);
+        component.GetTelemetry();
+        clock.UtcNow += TimeSpan.FromSeconds(9);
+        component.GetTelemetry();
+        clock.UtcNow += TimeSpan.FromSeconds(9);
+        component.GetTelemetry();
+        clock.UtcNow += TimeSpan.FromSeconds(9);
+        component.GetTelemetry();
+        clock.UtcNow += TimeSpan.FromSeconds(9);
+        component.GetTelemetry();
+        clock.UtcNow += TimeSpan.FromSeconds(4);
 
         // And: Getting telemetry 
         // (which is needed to give the model a slice of CPU to work in)
@@ -254,9 +273,8 @@ public class RefluxThermostatTests
         // And: Getting Telemetry
         var actual = component.GetTelemetry() as ThermostatModelBH.Telemetry;
 
-        // Then: Telemetry is still a "reasonable" value
-        var reasonable = 100.0;
-        Assert.That(actual!.Temperature,Is.LessThanOrEqualTo(reasonable));
+        // Then: Telemetry returns NULL
+        Assert.That(actual,Is.Null);
     }
 
     /// <summary>
