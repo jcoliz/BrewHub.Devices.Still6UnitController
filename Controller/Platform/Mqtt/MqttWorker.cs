@@ -334,9 +334,7 @@ public class MqttWorker : DeviceWorker
                     }
                 }
 
-                if (numsent > 0)
-                    _logger.LogInformation(LogEvents.TelemetryOK,"Telemetry: OK {count} messages",numsent);            
-                else
+                if (numsent == 0)
                     _logger.LogWarning(LogEvents.TelemetryNotSent,"Telemetry: No components had available readings. Nothing sent");
             }
             else
