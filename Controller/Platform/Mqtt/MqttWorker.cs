@@ -43,6 +43,7 @@ public class MqttWorker : DeviceWorker
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
     private readonly Regex _dtmiStrippingRegex = new Regex("^dtmi:(.+)");
+    private DateTimeOffset LastTelemetryUpdateTime = DateTimeOffset.MinValue;
     #endregion
 
     #region Constructor
@@ -292,6 +293,17 @@ public class MqttWorker : DeviceWorker
                     return;
                 }
 
+                // Task 1657: Log a warning when telemetry is taking longer than the telemetry period
+
+                if (LastTelemetryUpdateTime > DateTimeOffset.MinValue)
+                {
+                    var elapsed = DateTimeOffset.UtcNow - LastTelemetryUpdateTime;
+                    if (elapsed > _model.TelemetryPeriod * 3)
+                    {
+                        _logger.LogWarning(LogEvents.TelemetryDelayed, "Telemetry: Delayed {elapsed} since last send", elapsed);
+                    }
+                }
+
                 // Obtain readings from the root
                 var readings = _model.GetTelemetry();
 
@@ -340,6 +352,10 @@ public class MqttWorker : DeviceWorker
         catch (Exception ex)
         {
             _logger.LogError(LogEvents.TelemetrySingleError,ex,"Telemetry: Error");
+        }
+        finally
+        {
+            LastTelemetryUpdateTime = DateTimeOffset.UtcNow;
         }
     }
 
