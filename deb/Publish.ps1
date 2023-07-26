@@ -4,7 +4,7 @@
 # NOTE: Run from project root directory
 #
 
-$Application = "Still6UnitController"
+$Application = "still6unitcontroller"
 
 if (Test-Path publish_output)
 {

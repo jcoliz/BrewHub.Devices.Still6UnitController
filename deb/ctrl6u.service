@@ -4,8 +4,8 @@ Description=BrewHub 6-Unit Distillery Prototype v1
 [Service]
 Type=notify
 Environment="DOTNET_ROOT=/opt/dotnet"
-WorkingDirectory=/opt/Still6UnitController
-ExecStart=/opt/Still6UnitController/BrewHub.Controller
+WorkingDirectory=/opt/still6unitcontroller
+ExecStart=/opt/still6unitcontroller/BrewHub.Controller
 
 [Install]
 WantedBy=multi-user.target
