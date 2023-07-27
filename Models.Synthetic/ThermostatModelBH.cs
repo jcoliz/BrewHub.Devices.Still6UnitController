@@ -172,6 +172,7 @@ public class ThermostatModelBH : IComponentModel
         if (elapsed > maxelapsed)
         {
             lastread = now;
+            velocity = 0;
             return null;
 
             // If we had a logger here, we would log this.
