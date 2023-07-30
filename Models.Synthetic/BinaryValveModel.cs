@@ -47,7 +47,7 @@ public class BinaryValveModel :  IComponentModel
     /// Whether the valve is open. Only writable if `Source Metric` is null
     /// </summary>
     [JsonPropertyName("open")]
-    public bool IsOpen { get; set; }
+    public virtual bool IsOpen { get; set; }
 
     #endregion
 
@@ -73,6 +73,14 @@ public class BinaryValveModel :  IComponentModel
     #endregion
 
     #region Log Identity
+    /// <summary>
+    /// How should this component appear in the logs?
+    /// </summary>
+    /// <returns>String to identify the current device</returns>
+    public override string ToString()
+    {
+        return $"Synthetic Binary Valve";
+    }
     #endregion
 
     #region Fields
@@ -141,7 +149,7 @@ public class BinaryValveModel :  IComponentModel
     /// Set the application intitial state from the supplied configuration values
     /// </summary>
     /// <param name="values">Dictionary of all known configuration values which could apply to this component</param>
-    void IComponentModel.SetInitialState(IDictionary<string, string> values)
+    public virtual void SetInitialState(IDictionary<string, string> values)
     {
         if (values.ContainsKey("sourceMetric"))
             SourceMetric = values["sourceMetric"];

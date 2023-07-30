@@ -92,11 +92,11 @@ public abstract class DeviceWorker : BackgroundService
         }
         catch (TaskCanceledException)
         {
-            _logger.LogInformation(LogEvents.ExecuteFinished,"IoTHub Device Worker: Stopped");
+            _logger.LogInformation(LogEvents.ExecuteFinished,"Execute: Stopped");
         }
         catch (Exception ex)
         {
-            _logger.LogCritical(LogEvents.ExecuteFailed,"IoTHub Device Worker: Failed {type} {message}", ex.GetType().Name, ex.Message);
+            _logger.LogCritical(LogEvents.ExecuteFailed,"Execute: Failed {type} {message}", ex.GetType().Name, ex.Message);
         }
 
         await Task.Delay(500);

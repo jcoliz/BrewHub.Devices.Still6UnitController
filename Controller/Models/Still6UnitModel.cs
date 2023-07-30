@@ -5,6 +5,7 @@ using BrewHub.Devices.Platform.Common.Comms;
 using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Controllers.Models.Synthetic;
 using BrewHub.Controllers.Models.Modbus;
+using BrewHub.Controllers.Models.Gpio;
 using BrewHub.Controllers.Models.Modbus.Client;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -277,8 +278,16 @@ public class Still6UnitModel : DeviceInformationModel, IRootModel
                     Components["cv"] = new BinaryValveModel(_comms);
                     break;
 
+                case { Key: "cv", Value: nameof(BinaryValveGpioModel) }:
+                    Components["cv"] = new BinaryValveGpioModel(_comms);
+                    break;
+
                 case { Key: "rv", Value: true }:
                     Components["rv"] = new BinaryValveModel(_comms);
+                    break;
+
+                case { Key: "rv", Value: nameof(BinaryValveGpioModel) }:
+                    Components["rv"] = new BinaryValveGpioModel(_comms);
                     break;
 
                 case { Value: false }:
