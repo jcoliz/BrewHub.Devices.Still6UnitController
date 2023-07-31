@@ -1,0 +1,139 @@
+#
+# Configuration file template
+#   > Rename this to `config.toml`
+#   > Replace with values specific to your configuration
+#
+
+#
+# Connection to MQTT broker
+#
+
+[mqtt]
+
+# DNS name or IP of the mqtt broker on the network
+server = "mqtt"
+#server = "localhost"
+
+# Also can set to `none`, and will just log data but not send it anywhere
+#server = "none"
+
+# Port the broker listens on
+#port = 1883
+
+# Topic to send data on (requires changes to downstream components if changed)
+#topic = "brewhub;1"
+
+# Site this data is coming from
+#site = "none"
+
+#
+# Provisioning details
+#
+
+#[provisioning]
+
+# Name of this device (optional), otherwise will use host name
+#deviceid = "mydevice"
+
+#
+# Modbus connection
+#   > Only needed if components are selected which need Modbus
+#
+
+#[Modbus]
+
+# Which port is modbus connected to? 
+#port = "/dev/ttyS0"
+
+# Serial connection parameters
+#baudrate = 9600
+#parity = "Even"
+#stopbits = "One"
+#readtimeout = "PT1S"
+#writetimeout = "PT1S"
+
+#
+# Component selection
+#   > Leave this section out to produce only synthetic data
+#
+
+#[InitialState.Components]
+
+# Ambient Conditions component
+
+# Select synthetic data (default)
+#amb = true
+
+# Select the XY-MD02 sensor
+#amb = "Xymd02Model"
+
+# Select the SonBest SM7820B sensor
+#amb = "SonbestSm7820Model"
+
+# Omit this component entirely
+#amb = false
+
+# Condenser valve component
+
+# Select synthetic data (default)
+#cv = true
+
+# Select GPIO pin-controlling model
+#cv = "BinaryValveGpioModel"
+
+# Omit this component entirely
+#cv = false
+
+# Reflux Valve component
+
+# Select synthetic data (default)
+#rv = true
+
+# Select GPIO pin-controlling model
+#rv = "BinaryValveGpioModel"
+
+# Omit this component entirely
+#rv = false
+
+#
+# Initial state of device
+#
+
+#[InitialState.Root]
+
+# Unique serial number for this device
+#SerialNumber = "12345678"
+
+# Device information
+#manufacturer = "Raspberry Pi Foundation"
+#model = "Raspberry Pi Zero 2 W Rev 1.0"
+
+#
+# Initial state of `amb` component
+#   > Only needed if a physical sensor is selected
+#
+
+#[InitialState.amb]
+
+# Which Modbus address is the sensor listening on
+#Address = 1
+
+#
+# Initial state of `cv` component
+#   > Only needed if the GPIO-controlling model is selected
+#
+
+#[InitialState.cv]
+
+# Which pin to turn on when valve should be on
+#Pin = 5
+
+#
+# Initial state of `rv` component
+#   > Only needed if the GPIO-controlling model is selected
+#
+
+#[InitialState.rv]
+
+# Which pin to turn on when valve should be on
+#Pin = 6
