@@ -37,9 +37,9 @@ $ docker compose -f docker-compose.yml -f docker-compose-controllers.yml up -d
 
 ## Building Locally
 
-The controller is build on .NET 7.0. To build it, you'll need the [.NET SDK](https://dotnet.microsoft.com/en-us/download) installed on your machine.
+The controller is built on .NET 7.0. To build it, you'll need the [.NET SDK](https://dotnet.microsoft.com/en-us/download) installed on your machine.
 
-It needs to know where to look for an MQTT broker, and (optionally) what to use as a deviceid (client id) when connecting. You can use any supported .NET configuration method, or you can create a `config.toml` file in the project root:
+When running, it will need to know where to look for an MQTT broker, and (optionally) what to use as a deviceid (client id) when connecting. You can use any supported .NET configuration method, or you can create a `config.toml` file in the project root:
 
 ```toml
 [mqtt]
@@ -121,7 +121,7 @@ $ sudo apt install ./still6unitcontroller_0.1.11_arm64.deb
 Before running, you'll need to configure the controller. Copy the `config.template.toml` file in this
 repository to `/opt/still6unitcontroller/config.toml` on the target device then make the needed changes.
 
-In typical usage, the controller will send its readings to an MQTT broker. If you have that up, 
+In typical usage, the controller will send its rea~dings to an MQTT broker. If you have that up, 
 enter this in the config file, and that's all you need.
 
 ```toml
@@ -144,6 +144,28 @@ The controller runs as a systemd service, so can be started and inspected in the
 ```
 $ sudo systemctl start ctrl6u
 $ sudo systemctl status ctrl6u
+
+● ctrl6u.service - BrewHub 6-Unit Distillery Prototype v1
+     Loaded: loaded (/etc/systemd/system/ctrl6u.service; enabled; vendor preset: enabled)
+     Active: active (running) since Mon 2023-07-31 11:14:23 PDT; 8h ago
+   Main PID: 5620 (BrewHub.Control)
+      Tasks: 18 (limit: 191)
+        CPU: 1h 55min 18.991s
+     CGroup: /system.slice/ctrl6u.service
+             └─5620 /opt/still6unitcontroller/BrewHub.Controller
+Jul 31 09:58:59 pizero-1 systemd[1]: Starting BrewHub 6-Unit Distillery Prototype v1...
+Jul 31 09:59:04 pizero-1 BrewHub.Controller[3495]: DeviceWorker[100] Started OK
+Jul 31 09:59:05 pizero-1 BrewHub.Controller[3495]: ModbusClient[2101] Creating with options Port=/dev/ttyS0;BaudRate=9600;Parity=None;StopBits=One;ReadTimeout=PT1S;WriteTi>
+Jul 31 09:59:05 pizero-1 BrewHub.Controller[3495]: ModbusClient[2100] Created OK on /dev/ttyS0
+Jul 31 09:59:06 pizero-1 BrewHub.Controller[3495]: DeviceWorker[200] Initial State: OK Applied 20 keys
+Jul 31 09:59:06 pizero-1 BrewHub.Controller[3495]: DeviceWorker[101] Device: Waveshare RPi Zero Relay with Raspberry Pi Zero 2 W Rev 1.0 S/N:0000000029531123 ver:0.1.13
+Jul 31 09:59:06 pizero-1 BrewHub.Controller[3495]: DeviceWorker[102] Model: dtmi:brewhub:prototypes:still_6_unit;1
+Jul 31 09:59:06 pizero-1 BrewHub.Controller[3495]: MqttWorker[300] Provisioning: OK. Device pizero-1c
+Jul 31 09:59:06 pizero-1 BrewHub.Controller[3495]: Microsoft.Hosting.Lifetime[0] Application started. Hosting environment: Production; Content root path: /opt/still6unitcontroller
+Jul 31 09:59:06 pizero-1 systemd[1]: Started BrewHub 6-Unit Distillery Prototype v1.
+Jul 31 09:59:06 pizero-1 BrewHub.Controller[3495]: MqttWorker[400] Connection: OK.
+Jul 31 09:59:07 pizero-1 BrewHub.Controller[3495]: MqttWorker[700] Property: OK. Updated rt/targetTemp to 95
+Jul 31 09:59:09 pizero-1 BrewHub.Controller[3495]: DeviceWorker[720] Property: Reported OK. Next update after 00:01:00
 ```
 
 ## Using Physical Hardware
@@ -151,8 +173,8 @@ $ sudo systemctl status ctrl6u
 ![Modbus](docs/images/modbus.jpg)
 
 As configured above, the controller will generate synthetic data for testing and demonstration.
-It also supports Modbus-based sensor. Currently, the XY-MD02 sensor, and the Sonbest (TODO).
-Adding new sensors is a trivial coding task.
+In production, we use Modbus-based sensors. Currently, the XY-MD02 sensor, and the SonBest SM7820B, are
+implemented in the prototype. Adding new sensors is a trivial coding task.
 
 After the modbus sensors are connected, additional configuration is required in the `config.toml`
 file.
@@ -195,8 +217,6 @@ Now that these changes are complete, restart the controller for them to take eff
 $ sudo systemctl restart ctrl6u
 ```
 
-
-
 ## Running on Microcontrollers
 
-The BrewHub.Net stack requires very few resources. As a future project, I'll convert this to running  on an Espressif MCU-based device. Stay tuned!
+The BrewHub.Net stack requires very few resources. As a future project, I'll convert this to running on an Espressif MCU-based device. Stay tuned!
