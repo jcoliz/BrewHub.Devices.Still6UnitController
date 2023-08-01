@@ -119,6 +119,9 @@ public class ThermostatModelBH : IComponentModel
 
     private DateTimeOffset lastread = DateTimeOffset.MinValue;
 
+    private const double maxtemp = 95.7;
+    private const double mintemp = 15.0;
+
     #endregion
 
     #region Internals
@@ -183,6 +186,15 @@ public class ThermostatModelBH : IComponentModel
 
         // Determine the current temp
         temperature = temperature + elapsed * velocity + accel / 2.0 * elapsed * elapsed;
+
+        // Apply max/min
+        if (temperature > maxtemp || temperature < mintemp)
+        {
+            velocity = 0;
+            accel = 0;
+
+            temperature = Math.Min(Math.Max(temperature, mintemp), maxtemp);
+        }
 
         // Take the reading
         var reading = new Telemetry() { Temperature = temperature };
