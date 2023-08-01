@@ -304,34 +304,57 @@ public class MqttWorker : DeviceWorker
                     }
                 }
 
-                // Obtain readings from the root
-                var readings = _model.GetTelemetry();
-
-                // If telemetry exists
-                if (readings is not null)
+                // User Story 1670: Failed telemetry should not stop other telemetry from sending
+                try
                 {
-                    // Send them
-                    await SendDataMessageAsync(readings, new(string.Empty, _model));
-                    ++numsent;
+                    // Obtain readings from the root
+                    var readings = _model.GetTelemetry();
+
+                    // If telemetry exists
+                    if (readings is not null)
+                    {
+                        // Send them
+                        await SendDataMessageAsync(readings, new(string.Empty, _model));
+                        ++numsent;
+                    }
+                }
+                catch (AggregateException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(LogEvents.TelemetrySingleError,ex,"Telemetry: Error");
                 }
 
                 // Send telemetry from components
 
                 foreach(var kvp in _model.Components)
                 {
-                    // Obtain readings from this component
-                    readings = kvp.Value.GetTelemetry();
-                    if (readings is not null)
+                    try
                     {
-                        // Note that official PnP messages can only come from a single component at a time.
-                        // This is a weakness that drives up the message count. So, will have to decide later
-                        // if it's worth keeping this, or scrapping PnP compatibility and collecting them all
-                        // into a single message.
+                        // Obtain readings from this component
+                        var readings = kvp.Value.GetTelemetry();
+                        if (readings is not null)
+                        {
+                            // Note that official PnP messages can only come from a single component at a time.
+                            // This is a weakness that drives up the message count. So, will have to decide later
+                            // if it's worth keeping this, or scrapping PnP compatibility and collecting them all
+                            // into a single message.
 
-                        // Send them
-                        await SendDataMessageAsync(readings, kvp);
-                        ++numsent;
+                            // Send them
+                            await SendDataMessageAsync(readings, kvp);
+                            ++numsent;
+                        }
                     }
+                    catch (AggregateException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(LogEvents.TelemetrySingleError,ex,"Telemetry: Error");
+                    }                    
                 }
 
                 if (numsent == 0)
@@ -349,7 +372,7 @@ public class MqttWorker : DeviceWorker
         }
         catch (Exception ex)
         {
-            _logger.LogError(LogEvents.TelemetrySingleError,ex,"Telemetry: Error");
+            _logger.LogError(LogEvents.TelemetrySystemError,ex,"Telemetry: System Error");
         }
         finally
         {

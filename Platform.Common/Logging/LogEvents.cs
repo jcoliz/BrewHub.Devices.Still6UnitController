@@ -52,6 +52,7 @@ public class LogEvents
     public const int TelemetryDelayed           = 576;
     public const int TelemetryNotSent           = 577;
     public const int TelemetryNoPeriod          = 578;
+    public const int TelemetrySystemError       = 686;
     public const int TelemetrySingleError       = 687;
     public const int TelemetryMultipleError     = 688;
 
