@@ -14,7 +14,7 @@ Originally created for a spirits distiller, the prototype presents a simplified 
 equipment illustrated above. While there are **nineteen** components on the full version, this scaled-down prototype 
 works the same way, it's just easier to explain.
 
-We use the term "six-unit" here to refer to the components of the device model which is surfaced on the dashboard. Those units here are:
+We use the term "six-unit" here to refer to the components of the device model which are surfaced on the dashboard. Those units here are:
 
 * **Device**: The device itself. For the prototype, we ran on a [Waveshare RPi Zero Relay](https://www.waveshare.com/rpi-zero-relay.htm).
 * **Ambient Conditions**: A temperature and humidity sensor providing details about the conditions in the room where the equipment is installed.
