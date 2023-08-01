@@ -17,14 +17,15 @@ namespace BrewHub.Controllers.Models.Modbus.Client;
 public class ModbusClient : IModbusClient
 {
     private readonly IOptions<ModbusClientOptions> _options;
-    private readonly ILogger<ModbusClient> _logger;
+    private readonly ILogger _logger;
     private readonly ModbusRtuClient _client;
     private readonly Mutex _mutex = new Mutex();
 
-    public ModbusClient(IOptions<ModbusClientOptions> options, ILogger<ModbusClient> logger)
+    public ModbusClient(IOptions<ModbusClientOptions> options, ILoggerFactory logfact)
     {
+        // For more compact logs, only use the class name itself, NOT fully-qualified class name
+        _logger = logfact.CreateLogger(nameof(ModbusClient));
         _options = options;
-        _logger = logger;
         _client = new ModbusRtuClient();
     }
 
