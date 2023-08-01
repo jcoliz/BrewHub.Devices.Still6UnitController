@@ -65,11 +65,138 @@ $ dotnet run
 
 Open up the dashboard on `http://localhost:80`, and you'll soon see `your-device-name` show up with its new data.
 
-## Running on Rasperry Pi
+## Running on Raspberry Pi
 
-This controller ultimately will connect to physical sensors to send true data. It will run on any .NET-supported platform, including Rasperry Pi. For the prototype, only the Ambient Conditions component was connected to a physical sensor.
+![Waveshare](docs/images/waveshare.jpg)
+
+The controller software is designed to run on a [Waveshare RPi Zero Relay](https://www.waveshare.com/wiki/RPi_Zero_Relay). 
+It will work on any device which runs .NET 7, has an RS485 converter attached to a serial port, and has 12V relays.
+
+### Prepare
+
+The controller requires the .NET 7 runtime. Unfortunately, as of this writing, Microsoft doesn't
+publish ARM64 packages for dotnet components. Instead, you can use the [dotnet-install script](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-install-script) to pull down the latest runtime(s).
+
+Here's my recommended usage to install for system-wide usage. Install both the 6.0 and 7.0
+runtimes for maximum compatibility.
+
+```
+$ sudo ./dotnet-install.sh --runtime dotnet --channel 7.0 --install-dir /opt/dotnet
+$ sudo ./dotnet-install.sh --runtime dotnet --channel 6.0 --install-dir /opt/dotnet
+```
+
+Then, create `/etc/profile.d/dotnet.sh` with these contents:
+
+```
+export DOTNET_ROOT=/opt/dotnet
+export PATH=$PATH:/opt/dotnet
+```
+
+Finally, use the `raspi-config` tool to enable the hardware serial port, and disable login shell
+over serial. This will enable the serial port to listen to the onboard SP3485EN IC which handles the RS485 to serial translation.
+
+### Install
+
+Debian packages for ARM64 are automatically created during both the CI and Release pipelines for the controller.
+These are hosted on the BrewHub [universal packages feed](https://dev.azure.com/jcoliz/BrewHub/_artifacts/feed/brewhub-debs) on Azure DevOps. These can simply be downloaded and installed onto
+the target hardware.
+
+Download from Azure DevOps:
+```
+PS> az artifacts universal download --organization "https://dev.azure.com/jcoliz/" --project "8257bdfd-5bba-4d04-a064-9d1c720d3b35" --scope project --feed "brewhub-debs" --name "still6unitcontroller" --version "0.1.11" --path bin
+```
+
+Transfer to target machine:
+```
+PS> scp .\bin\arm64\still6unitcontroller_0.1.11_arm64.deb user@hostname:
+```
+
+On the target machine:
+```
+$ sudo apt install ./still6unitcontroller_0.1.11_arm64.deb
+```
+
+### Configure
+
+Before running, you'll need to configure the controller. Copy the `config.template.toml` file in this
+repository to `/opt/still6unitcontroller/config.toml` on the target device then make the needed changes.
+
+In typical usage, the controller will send its readings to an MQTT broker. If you have that up, 
+enter this in the config file, and that's all you need.
+
+```toml
+[mqtt]
+server = "hostname"
+```
+
+Otherwise, you can tell the controller to simply run by itself as a standalone component, so you
+can test everything else
+
+```toml
+[mqtt]
+server = "none"
+```
+
+### Launch
+
+The controller runs as a systemd service, so can be started and inspected in the usual way:
+
+```
+$ sudo systemctl start ctrl6u
+$ sudo systemctl status ctrl6u
+```
+
+## Using Physical Hardware
+
+![Modbus](docs/images/modbus.jpg)
+
+As configured above, the controller will generate synthetic data for testing and demonstration.
+It also supports Modbus-based sensor. Currently, the XY-MD02 sensor, and the Sonbest (TODO).
+Adding new sensors is a trivial coding task.
+
+After the modbus sensors are connected, additional configuration is required in the `config.toml`
+file.
+
+First, configure the modbus bus itself. In this example, only the `parity` needs adjustment
+from the default values.
+
+```toml
+[Modbus]
+
+# Which port is modbus connected to? 
+port = "/dev/ttyS0"
+
+# Serial connection parameters
+parity = "None"
+```
+
+Next, we'll select the XY-MD02 sensor for use by the Ambient Conditions (`amb`) component:
+
+```toml
+[InitialState.Components]
+
+# Ambient Conditions component
+# Select the XY-MD02 sensor
+amb = "Xymd02Model"
+```
+
+Then, identify its address on Modbus. From the factory, this device resides on address `1`.
+
+```toml
+[InitialState.amb]
+
+# Which Modbus address is the sensor listening on
+Address = 1
+```
+
+Now that these changes are complete, restart the controller for them to take effect.
+
+```
+$ sudo systemctl restart ctrl6u
+```
+
+
 
 ## Running on Microcontrollers
 
-The BrewHub.Net stack requires very few resources. As a future project, I'll demonstrate running this on an Espressif MCU-based device. Stay tuned!
-
+The BrewHub.Net stack requires very few resources. As a future project, I'll convert this to running  on an Espressif MCU-based device. Stay tuned!
