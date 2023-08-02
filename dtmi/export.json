@@ -211,9 +211,7 @@
         ],
         "name": "t",
         "schema": "double",
-        "displayName": {
-          "en": "Temperature"
-        },
+        "displayName": "Temperature",
         "unit": "degreeCelsius",
         "chartlevel": "solution"
       },
@@ -225,9 +223,7 @@
         ],
         "name": "h",
         "schema": "double",
-        "displayName": {
-          "en": "Humidity"
-        },
+        "displayName": "Humidity",
         "unit": "percent",
         "chartlevel": "component"
       },
@@ -239,9 +235,7 @@
         ],
         "name": "tcorr",
         "schema": "double",
-        "displayName": {
-          "en": "Temperature Correction"
-        },
+        "displayName": "Temperature correction",
         "description": "Correction value to apply for temperature readings",
         "unit": "degreeCelsius",
         "writable": true,
@@ -255,13 +249,35 @@
         ],
         "name": "hcorr",
         "schema": "double",
-        "displayName": {
-          "en": "Humidity Correction"
-        },
+        "displayName": "Humidity correction",
         "description": "Correction value to apply for humidity readings",
         "unit": "percent",
         "writable": true,
         "metriclevel": "component"
+      },
+      {
+        "@type": [
+          "Property",
+          "Temperature",
+          "Dashboard"
+        ],
+        "name": "Currentt",
+        "schema": "double",
+        "displayName": "Temperature",
+        "unit": "degreeCelsius",
+        "metriclevel": "never"
+      },
+      {
+        "@type": [
+          "Property",
+          "RelativeHumidity",
+          "Dashboard"
+        ],
+        "name": "Currenth",
+        "schema": "double",
+        "displayName": "Humidity",
+        "unit": "percent",
+        "metriclevel": "never"
       }
     ]
   },
