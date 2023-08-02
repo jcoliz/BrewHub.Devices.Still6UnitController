@@ -14,12 +14,8 @@
               "DataSize",
               "Dashboard"
             ],
-            "description": {
-              "en": "Current working set of the device memory in KiB."
-            },
-            "displayName": {
-              "en": "Current Working Set"
-            },
+            "description": "Current working set of the device memory in KiB.",
+            "displayName": "Current Working Set",
             "name": "WorkingSet",
             "schema": "double",
             "unit": "kibibit",
@@ -32,12 +28,8 @@
               "Dashboard"
             ],
             "name": "CpuLoad",
-            "description": {
-              "en": "Current CPU load."
-            },
-            "displayName": {
-              "en": "CPU Load"
-            },
+            "description": "Current CPU load",
+            "displayName": "CPU Load",
             "schema": "double",
             "unit": "percent",        
             "chartlevel": "device"
@@ -50,9 +42,6 @@
             "Dashboard"
           ],
           "name": "Status",
-          "displayName": {
-              "en": "Status"
-            }, 
           "description": "Zero is OK, >0 increasing severity to 999",
           "schema": "integer",
           "metriclevel": "solution"
@@ -60,18 +49,14 @@
         {
           "@type": "Property",
           "name": "TelemetryInterval",
-          "displayName": {
-              "en": "Telemetry Interval"
-            },
+          "displayName": "Telemetry Interval",
           "writable": true,
           "schema": "duration",
           "description": "How frequently to send telemetry"
         },
         {
             "@type": "Property",
-            "displayName": {
-              "en": "Serial Number"
-            },
+            "displayName": "Serial Number",
             "name": "SerialNumber",
             "schema": "string",
             "writable": false
@@ -109,26 +94,29 @@
             }
         },
         {
-          "@type": "Property",
-          "description": {
-            "en": "Current working set of the device memory in KiB."
-          },
-          "displayName": {
-            "en": "Current Working Set"
-          },
+          "@type": [
+            "Property",
+            "DataSize",
+            "Dashboard"
+          ],
+          "description": "Current working set of the device memory in KiB.",
+          "displayName": "Current Working Set",
           "name": "CurrentWorkingSet",
-          "schema": "double"
-      },
+          "schema": "double",
+          "unit": "kibibit",
+          "metriclevel": "never"
+        },
       {
-          "@type": "Property",
-          "name": "CurrentCpuLoad",
-          "description": {
-            "en": "Current CPU load."
-          },
-          "displayName": {
-            "en": "Current CPU Load"
-          },
-          "schema": "double"
+        "@type": [
+          "Property",
+          "Load",
+          "Dashboard"
+        ],
+        "name": "CurrentCpuLoad",
+        "displayName": "Current CPU Load",
+        "schema": "double",
+        "unit": "percent",
+        "metriclevel": "never"
       },
       {
         "@type":
@@ -138,9 +126,7 @@
           "Dashboard"
         ],
         "name": "CurrentStatus",
-        "displayName": {
-            "en": "Current Status"
-          }, 
+        "displayName": "Current Status",
         "description": "Zero is OK, >0 increasing severity to 999",
         "schema": "integer",
         "metriclevel": "never"
