@@ -58,19 +58,14 @@
           "metriclevel": "solution"
         },
         {
-            "@type":
-            [
-              "Property",
-              "Dashboard"
-            ],
-            "name": "TelemetryInterval",
-            "displayName": {
-                "en": "Telemetry Interval"
-              },
-            "writable": true,
-            "schema": "duration",
-            "description": "How frequently to send telemetry",
-            "metriclevel": "component"
+          "@type": "Property",
+          "name": "TelemetryInterval",
+          "displayName": {
+              "en": "Telemetry Interval"
+            },
+          "writable": true,
+          "schema": "duration",
+          "description": "How frequently to send telemetry"
         },
         {
             "@type": "Property",
@@ -112,6 +107,43 @@
               "name": "delay",
               "schema": "duration"
             }
-          }
+        },
+        {
+          "@type": "Property",
+          "description": {
+            "en": "Current working set of the device memory in KiB."
+          },
+          "displayName": {
+            "en": "Current Working Set"
+          },
+          "name": "CurrentWorkingSet",
+          "schema": "double"
+      },
+      {
+          "@type": "Property",
+          "name": "CurrentCpuLoad",
+          "description": {
+            "en": "Current CPU load."
+          },
+          "displayName": {
+            "en": "Current CPU Load"
+          },
+          "schema": "double"
+      },
+      {
+        "@type":
+        [
+          "Property",
+          "Status",
+          "Dashboard"
+        ],
+        "name": "CurrentStatus",
+        "displayName": {
+            "en": "Current Status"
+          }, 
+        "description": "Zero is OK, >0 increasing severity to 999",
+        "schema": "integer",
+        "metriclevel": "never"
+      }
     ]
 }
