@@ -15,7 +15,7 @@
               "Dashboard"
             ],
             "description": "Current working set of the device memory in KiB.",
-            "displayName": "Current Working Set",
+            "displayName": "Working set",
             "name": "WorkingSet",
             "schema": "double",
             "unit": "kibibit",
@@ -28,8 +28,7 @@
               "Dashboard"
             ],
             "name": "CpuLoad",
-            "description": "Current CPU load",
-            "displayName": "CPU Load",
+            "displayName": "CPU load",
             "schema": "double",
             "unit": "percent",        
             "chartlevel": "device"
@@ -49,23 +48,21 @@
         {
           "@type": "Property",
           "name": "TelemetryInterval",
-          "displayName": "Telemetry Interval",
+          "displayName": "Telemetry interval",
           "writable": true,
           "schema": "duration",
           "description": "How frequently to send telemetry"
         },
         {
             "@type": "Property",
-            "displayName": "Serial Number",
+            "displayName": "Serial number",
             "name": "SerialNumber",
             "schema": "string",
             "writable": false
         },
         {
             "@type": "Property",
-            "displayName": {
-              "en": "Start Time"
-            },
+            "displayName": "Start time",
             "name": "StartTimeUTC",
             "description": "Time this device was last started (UTC)",
             "schema": "dateTime",
@@ -74,12 +71,8 @@
         {
             "@type": "Command",
             "commandType": "synchronous",
-            "description": {
-              "en": "Reboots the device after waiting the specified time."
-            },
-            "displayName": {
-              "en": "Restart Device"
-            },
+            "description": "Reboots the device after waiting the specified time.",
+            "displayName":"Restart Device",
             "name": "reboot",
             "request": {
               "@type": "CommandPayload",
@@ -100,7 +93,7 @@
             "Dashboard"
           ],
           "description": "Current working set of the device memory in KiB.",
-          "displayName": "Current Working Set",
+          "displayName": "Working set",
           "name": "CurrentWorkingSet",
           "schema": "double",
           "unit": "kibibit",
@@ -113,7 +106,7 @@
           "Dashboard"
         ],
         "name": "CurrentCpuLoad",
-        "displayName": "Current CPU Load",
+        "displayName": "CPU load",
         "schema": "double",
         "unit": "percent",
         "metriclevel": "never"
@@ -126,7 +119,7 @@
           "Dashboard"
         ],
         "name": "CurrentStatus",
-        "displayName": "Current Status",
+        "displayName": "Status",
         "description": "Zero is OK, >0 increasing severity to 999",
         "schema": "integer",
         "metriclevel": "never"
