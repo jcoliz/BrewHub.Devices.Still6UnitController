@@ -25,9 +25,6 @@
               "Status"
             ],
             "name": "Status",
-            "displayName": {
-                "en": "Status"
-              },
             "description": "Zero is OK, >0 increasing severity to 999",
             "schema": "integer"
         },
@@ -39,9 +36,7 @@
             ],
             "name": "tcorr",
             "schema": "double",
-            "displayName": {
-                "en": "Temperature Correction"
-            },
+            "displayName": "Temperature correction",
             "description": "Correction value to apply for temperature readings",
             "unit": "degreeCelsius",
             "writable": true,
@@ -55,7 +50,7 @@
             ],
             "name": "targetTemp",
             "schema": "double",
-            "displayName": "Target Temperature",
+            "displayName": "Target temperature",
             "description": "Specify the exact temperature to target.",
             "unit": "degreeCelsius",
             "writable": true,
@@ -68,7 +63,7 @@
             ],
             "name": "targetMetric",
             "schema": "string",
-            "displayName": "Target Metric",
+            "displayName": "Target metric",
             "description": "Specify a metric on another component whose temperature we target. Overrides targetTemp if set.",
             "writable": true,
             "chartlevel": "component"
@@ -79,10 +74,34 @@
             ],
             "name": "overTemp",
             "schema": "boolean",
-            "displayName": {
-                "en": "Is Over Temp"
-            },
+            "displayName": "Is over temp",
             "description": "Temperature reading is over target temp"
+        },
+        {
+            "@type": [
+                "Property",
+                "Temperature",
+                "Dashboard"
+            ],
+            "name": "Currentt",
+            "displayName": "Temperature",
+            "description": "Temperature in degrees Celsius.",
+            "schema": "double",
+            "unit": "degreeCelsius",
+            "metriclevel": "never"
+        },
+        {
+            "@type":
+            [
+              "Property",
+              "Status",
+              "Dashboard"
+            ],
+            "name": "CurrentStatus",
+            "displayName": "Status",
+            "description": "Zero is OK, >0 increasing severity to 999",
+            "schema": "integer",
+            "metriclevel": "never"
         }
     ]
 }
