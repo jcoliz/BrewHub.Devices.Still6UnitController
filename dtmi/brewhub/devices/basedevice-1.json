@@ -86,7 +86,7 @@
             "displayName": {
               "en": "Start Time"
             },
-            "name": "StartTime",
+            "name": "StartTimeUTC",
             "description": "Time this device was last started (UTC)",
             "schema": "dateTime",
             "writable": false
