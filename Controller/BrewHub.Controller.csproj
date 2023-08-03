@@ -35,7 +35,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Models.Synthetic\Models.Synthetic.csproj" />
     <ProjectReference Include="..\Platform.Common\Platform.Common.csproj" />
-    <ProjectReference Include="..\Protocol.Mqtt\Protocol.Mqtt.csproj" />
+    <ProjectReference Include="..\BrewHub.Protocol.Mqtt\Protocol.Mqtt\Protocol.Mqtt.csproj" />
     <ProjectReference Include="..\Models.Modbus\Models.Modbus.csproj" />
     <ProjectReference Include="..\Models.Gpio\Models.Gpio.csproj" />
   </ItemGroup>
