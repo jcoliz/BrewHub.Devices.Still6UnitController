@@ -314,7 +314,7 @@ public class MqttWorker : DeviceWorker
                     if (readings is not null)
                     {
                         // Send them
-                        await SendDataMessageAsync(readings, new(string.Empty, _model));
+                        await SendDataMessageAsync(readings, MessageGenerator.MessageKind.Telemetry, new(string.Empty, _model));
                         ++numsent;
                     }
                 }
@@ -343,7 +343,7 @@ public class MqttWorker : DeviceWorker
                             // into a single message.
 
                             // Send them
-                            await SendDataMessageAsync(readings, kvp);
+                            await SendDataMessageAsync(readings, MessageGenerator.MessageKind.Telemetry, kvp);
                             ++numsent;
                         }
                     }
@@ -386,16 +386,16 @@ public class MqttWorker : DeviceWorker
     /// <remarks>
     /// Can be telemetry or properties or both
     /// </remarks>
-    private async Task SendDataMessageAsync(object telemetry, KeyValuePair<string, IComponentModel> component)
+    private async Task SendDataMessageAsync(object metrics, MessageGenerator.MessageKind kind, KeyValuePair<string, IComponentModel> component)
     {
         // Create a dictionary of telemetry payload
 
-        var telemetry_json = JsonSerializer.Serialize(telemetry,_jsonoptions);
-        var telemetry_dict = JsonSerializer.Deserialize<Dictionary<string, object>>(telemetry_json);
+        var metrics_json = JsonSerializer.Serialize(metrics,_jsonoptions);
+        var metrics_dict = JsonSerializer.Deserialize<Dictionary<string, object>>(metrics_json);
 
         // Create message
 
-        var (topic, payload) = messageGenerator.Generate(MessageGenerator.MessageKind.Data, null, component.Key, component.Value.dtmi, telemetry_dict!);
+        var (topic, payload) = messageGenerator.Generate(kind, null, component.Key, component.Value.dtmi, metrics_dict!);
 
         // Send it
 
@@ -446,7 +446,7 @@ public class MqttWorker : DeviceWorker
         {
             // We can just send them as a telemetry messages
             // Right now telemetry and props messages are no different
-            await SendDataMessageAsync(props, new(string.Empty, _model));
+            await SendDataMessageAsync(props, MessageGenerator.MessageKind.ReportedProperties, new(string.Empty, _model));
         }
 
         // Send properties from components
@@ -463,7 +463,7 @@ public class MqttWorker : DeviceWorker
                 // into a single message.
 
                 // Send them
-                await SendDataMessageAsync(props, kvp);
+                await SendDataMessageAsync(props, MessageGenerator.MessageKind.ReportedProperties, kvp);
             }
         }
     }
