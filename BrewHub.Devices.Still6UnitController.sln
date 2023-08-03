@@ -11,13 +11,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Platform.Common", "Platform
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models.Synthetic.Tests.Unit", "Models.Synthetic.Tests.Unit\Models.Synthetic.Tests.Unit.csproj", "{60E2172D-CF3A-4B52-A10F-E431376C1D66}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protocol.Mqtt", "Protocol.Mqtt\Protocol.Mqtt.csproj", "{10CAB7D1-24BE-4A79-B997-428B5B0D05DB}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Platform.Common.Tests.Unit", "Platform.Common.Tests.Unit\Platform.Common.Tests.Unit.csproj", "{D0BA05F4-C5AA-4CED-815C-E19D9E7B5C05}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models.Modbus", "Models.Modbus\Models.Modbus.csproj", "{398792FA-96AA-4648-8B95-895228A5EB83}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models.Gpio", "Models.Gpio\Models.Gpio.csproj", "{D4F5DC6F-F372-4C54-9B6E-4C9F30BD0EB8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BrewHub.Protocol.Mqtt", "BrewHub.Protocol.Mqtt", "{D7A8C285-CB60-4064-8DD5-CAE9500759FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protocol.Mqtt", "BrewHub.Protocol.Mqtt\Protocol.Mqtt\Protocol.Mqtt.csproj", "{90C46862-55FD-47CC-AD02-ABB1DDA270EE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,10 +46,6 @@ Global
 		{60E2172D-CF3A-4B52-A10F-E431376C1D66}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60E2172D-CF3A-4B52-A10F-E431376C1D66}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{60E2172D-CF3A-4B52-A10F-E431376C1D66}.Release|Any CPU.Build.0 = Release|Any CPU
-		{10CAB7D1-24BE-4A79-B997-428B5B0D05DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10CAB7D1-24BE-4A79-B997-428B5B0D05DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{10CAB7D1-24BE-4A79-B997-428B5B0D05DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{10CAB7D1-24BE-4A79-B997-428B5B0D05DB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D0BA05F4-C5AA-4CED-815C-E19D9E7B5C05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D0BA05F4-C5AA-4CED-815C-E19D9E7B5C05}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0BA05F4-C5AA-4CED-815C-E19D9E7B5C05}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -60,5 +58,12 @@ Global
 		{D4F5DC6F-F372-4C54-9B6E-4C9F30BD0EB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4F5DC6F-F372-4C54-9B6E-4C9F30BD0EB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4F5DC6F-F372-4C54-9B6E-4C9F30BD0EB8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90C46862-55FD-47CC-AD02-ABB1DDA270EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90C46862-55FD-47CC-AD02-ABB1DDA270EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90C46862-55FD-47CC-AD02-ABB1DDA270EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90C46862-55FD-47CC-AD02-ABB1DDA270EE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{90C46862-55FD-47CC-AD02-ABB1DDA270EE} = {D7A8C285-CB60-4064-8DD5-CAE9500759FD}
 	EndGlobalSection
 EndGlobal
