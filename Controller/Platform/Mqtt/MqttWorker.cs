@@ -156,9 +156,9 @@ public class MqttWorker : DeviceWorker
             if (!mqttClient.IsConnected)
                 throw new ApplicationException("Timeout attempting to connect");
 
-            // Listen for all node command messages
-            var topic = messageGenerator.GetTopic(MessageGenerator.MessageKind.NodeCommandAll);
-            await mqttClient.SubscribeAsync(topic);
+            // Listen for all command messages
+            var topic = messageGenerator.GetTopic(MessageGenerator.MessageKind.Command);
+            await mqttClient.SubscribeAsync(topic + "/#");
         }
         catch (Exception ex)
         {
