@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
 using BrewHub.Devices.Platform.Common.Models;
+using BrewHub.Devices.Platform.Common.Workers;
+using BrewHub.Devices.Platform.Common.Providers;
 using BrewHub.Devices.Platform.Mqtt;
 using BrewHub.Protocol.Mqtt;
 using BrewHub.Controllers;
@@ -11,9 +13,10 @@ using IHost host = Host.CreateDefaultBuilder(args)
     .UseSystemd() 
     .ConfigureServices((context, services) =>
     {
-        services.AddHostedService<MqttWorker>();
+        services.AddSingleton<ITransportProvider, MqttWorker>();
         services.AddSingleton<IRootModel,Still6UnitModel>();
         services.AddSingleton<IModbusClient, ModbusClient>();
+        services.AddHostedService<DeviceWorker>();
 
         services.Configure<MqttOptions>(
             context.Configuration.GetSection(MqttOptions.Section)

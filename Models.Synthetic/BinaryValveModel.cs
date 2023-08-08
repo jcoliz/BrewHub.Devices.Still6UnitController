@@ -114,6 +114,7 @@ public class BinaryValveModel :  IComponentModel
             // OR could make this telemetry (perhaps better?)
         }
 
+        // TODO: In
         // Send back the property AS telemetry. This would not be needed if I could trigger
         // a reported property update.
         return new Telemetry() { IsOpen = this.IsOpen };

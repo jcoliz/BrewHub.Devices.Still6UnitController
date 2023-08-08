@@ -1,9 +1,9 @@
-
 // Copyright (C) 2023 James Coliz, Jr. <jcoliz@outlook.com> All rights reserved
 // Use of this source code is governed by the MIT license (see LICENSE file)
 
 using BrewHub.Devices.Platform.Common.Logging;
 using BrewHub.Devices.Platform.Common.Models;
+using BrewHub.Devices.Platform.Common.Providers;
 using System.Reflection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,7 +17,7 @@ namespace BrewHub.Devices.Platform.Common.Workers;
 /// <remarks>
 /// Override with specific connection and transmission details
 /// </remarks>
-public abstract class DeviceWorker : BackgroundService
+public class DeviceWorker : BackgroundService
 {
 #region Injected Fields
 
@@ -30,6 +30,7 @@ public abstract class DeviceWorker : BackgroundService
     private readonly IConfiguration _config;
     private readonly IHostEnvironment _hostenv;
     private readonly IHostApplicationLifetime _lifetime;
+    private readonly ITransportProvider _transport;
 
     #endregion
 
@@ -38,11 +39,18 @@ public abstract class DeviceWorker : BackgroundService
     private TimeSpan PropertyUpdatePeriod = TimeSpan.FromMinutes(1);
     protected readonly TimeSpan TelemetryRetryPeriod = TimeSpan.FromMinutes(1);
     private readonly TimeSpan MaxPropertyUpdateInterval = TimeSpan.FromMinutes(5);
-
+    private DateTimeOffset LastTelemetryUpdateTime = DateTimeOffset.MinValue;
     #endregion
 
     #region Constructor
-    public DeviceWorker(ILoggerFactory logfact, IRootModel model, IConfiguration config, IHostEnvironment hostenv, IHostApplicationLifetime lifetime)
+    public DeviceWorker(
+        ILoggerFactory logfact, 
+        IRootModel model, 
+        IConfiguration config, 
+        IHostEnvironment hostenv, 
+        IHostApplicationLifetime lifetime,
+        ITransportProvider transport
+    )
     {
         // For more compact logs, only use the class name itself, NOT fully-qualified class name
         _logger = logfact.CreateLogger(nameof(DeviceWorker));
@@ -50,6 +58,9 @@ public abstract class DeviceWorker : BackgroundService
         _config = config;
         _hostenv = hostenv;
         _lifetime = lifetime;
+        _transport = transport;
+
+        transport.PropertyReceived += PropertyReceivedHandler;
     }
 #endregion
 
@@ -73,8 +84,10 @@ public abstract class DeviceWorker : BackgroundService
             _logger.LogInformation(LogEvents.ExecuteDeviceInfo,"Device: {device}", _model);
             _logger.LogInformation(LogEvents.ExecuteDeviceModel,"Model: {dtmi}", _model.dtmi);
 
-            await ProvisionDevice();
-            await OpenConnection();
+            await _transport.ConnectAsync();
+            //await ProvisionDevice();
+            //await OpenConnection();
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 await SendTelemetry();
@@ -112,7 +125,7 @@ public abstract class DeviceWorker : BackgroundService
     /// Generally not needed to override this
     /// </remarks>
     /// <returns></returns>
-    protected virtual Task LoadInitialState()
+    protected Task LoadInitialState()
     {
         try
         {
@@ -179,25 +192,6 @@ public abstract class DeviceWorker : BackgroundService
 
         return Task.CompletedTask;
     }
-
-    /// <summary>
-    /// Provision this device according to the config supplied in "Provisioning" section
-    /// </summary>
-    /// <remarks>
-    /// Note that the Provisioning section is designed to follow the format of the config.toml
-    /// used by Azure IoT Edge. So if you generate a config.toml for an edge device, you can
-    /// use it here. Just be sure to add the config.toml to the HostConfiguration during setup.
-    /// (See examples for how this is done.)
-    /// </remarks>
-    /// <exception cref="ApplicationException">Thrown if provisioning fails (critical error)</exception>
-    protected abstract Task ProvisionDevice();
-
-    /// <summary>
-    /// Open a connection to the destination service where our communication is headed.
-    /// </summary>
-    /// <exception cref="ApplicationException">Thrown if connection fails (critical error)</exception>
-    protected abstract Task OpenConnection();
-
     #endregion
 
     #region Commands
@@ -207,7 +201,108 @@ public abstract class DeviceWorker : BackgroundService
     /// <summary>
     /// Send latest telemetry from root and all components
     /// </summary>
-    protected abstract Task SendTelemetry();
+    protected async Task SendTelemetry()
+    {
+        try
+        {
+            int numsent = 0;
+
+            // Send telemetry from root
+
+            if (_model.TelemetryPeriod > TimeSpan.Zero)
+            {
+                if (!_transport.IsConnected)
+                {
+                    _logger.LogWarning(LogEvents.MqttNotConnectedTelemetryNotSent,"Telemetry: Client not connected. Telemetry not sent.");
+                    return;
+                }
+
+                // Task 1657: Log a warning when telemetry is taking longer than the telemetry period
+
+                if (LastTelemetryUpdateTime > DateTimeOffset.MinValue)
+                {
+                    var elapsed = DateTimeOffset.UtcNow - LastTelemetryUpdateTime;
+                    if (elapsed > _model.TelemetryPeriod * 3)
+                    {
+                        _logger.LogWarning(LogEvents.TelemetryDelayed, "Telemetry: Delayed {elapsed} since last send", elapsed);
+                    }
+                }
+
+                // User Story 1670: Failed telemetry should not stop other telemetry from sending
+                try
+                {
+                    // Obtain readings from the root
+                    var readings = _model.GetTelemetry();
+
+                    // If telemetry exists
+                    if (readings is not null)
+                    {
+                        // Send them
+                        await _transport.SendTelemetryAsync(readings,null,_model.dtmi);
+                        ++numsent;
+                    }
+                }
+                catch (AggregateException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(LogEvents.TelemetrySingleError,ex,"Telemetry: Error");
+                }
+
+                // Send telemetry from components
+
+                foreach(var kvp in _model.Components)
+                {
+                    try
+                    {
+                        // Obtain readings from this component
+                        var readings = kvp.Value.GetTelemetry();
+                        if (readings is not null)
+                        {
+                            // Note that official PnP messages can only come from a single component at a time.
+                            // This is a weakness that drives up the message count. So, will have to decide later
+                            // if it's worth keeping this, or scrapping PnP compatibility and collecting them all
+                            // into a single message.
+
+                            // Send them
+                            await _transport.SendTelemetryAsync(readings,kvp.Key,kvp.Value.dtmi);
+                            ++numsent;
+                        }
+                    }
+                    catch (AggregateException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(LogEvents.TelemetrySingleError,ex,"Telemetry: Error");
+                    }                    
+                }
+
+                if (numsent == 0)
+                    _logger.LogWarning(LogEvents.TelemetryNotSent,"Telemetry: No components had available readings. Nothing sent");
+            }
+            else
+                _logger.LogWarning(LogEvents.TelemetryNoPeriod,"Telemetry: Telemetry period not configured. Nothing sent. Will try again in {period}",TelemetryRetryPeriod);
+        }
+        catch (AggregateException ex)
+        {
+            foreach (Exception exception in ex.InnerExceptions)
+            {
+                _logger.LogError(LogEvents.TelemetryMultipleError, exception, "Telemetry: Multiple Errors");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(LogEvents.TelemetrySystemError,ex,"Telemetry: System Error");
+        }
+        finally
+        {
+            LastTelemetryUpdateTime = DateTimeOffset.UtcNow;
+        }
+    }
     #endregion
 
     #region Properties
@@ -219,14 +314,47 @@ public abstract class DeviceWorker : BackgroundService
     /// Generally not needed to override this method. Implement 
     /// UpdateReportedProperties to do the actual update.
     /// </remarks>
-    protected virtual async Task ManageReportedProperties()
+    protected async Task ManageReportedProperties()
     {
         try
         {
             if (DateTimeOffset.Now < NextPropertyUpdateTime)
                 return;
 
-            await UpdateReportedProperties();
+            if (!_transport.IsConnected)
+            {
+                _logger.LogWarning(LogEvents.MqttNotConnectedPropertyNotSent,"Properties: Client not connected. Properties not sent.");
+                return;
+            }
+
+            // Get device properties
+            var props = _model.GetProperties();
+
+            // If properties exist
+            if (props is not null)
+            {
+                // We can just send them as a telemetry messages
+                // Right now telemetry and props messages are no different
+                await _transport.SendPropertiesAsync(props,null,_model.dtmi);
+            }
+
+            // Send properties from components
+
+            foreach(var kvp in _model.Components)
+            {
+                // Obtain readings from this component
+                props = kvp.Value.GetProperties();
+                if (props is not null)
+                {
+                    // Note that official PnP messages can only come from a single component at a time.
+                    // This is a weakness that drives up the message count. So, will have to decide later
+                    // if it's worth keeping this, or scrapping PnP compatibility and collecting them all
+                    // into a single message.
+
+                    // Send them
+                    await _transport.SendPropertiesAsync(props,kvp.Key,kvp.Value.dtmi);
+                }
+            }
 
             _logger.LogInformation(LogEvents.PropertyReportedOK,"Property: Reported OK. Next update after {delay}",PropertyUpdatePeriod);
 
@@ -255,9 +383,27 @@ public abstract class DeviceWorker : BackgroundService
         }
     }
 
-    /// <summary>
-    /// Send latest values of properties from root and all components
-    /// </summary>
-    protected abstract Task UpdateReportedProperties();
+    private void PropertyReceivedHandler(object? sender, PropertyReceivedEventArgs e)
+    {
+        object updated;
+
+        if (string.IsNullOrEmpty(e.Component))
+        {
+            updated = _model.SetProperty(e.PropertyName, e.JsonValue);
+        }
+        else
+        {
+            updated = _model.Components[e.Component].SetProperty(e.PropertyName, e.JsonValue);
+        }
+
+        _logger.LogInformation(
+            LogEvents.PropertyUpdateOK, 
+            "Property: OK. Updated {component}/{property} to {updated}", 
+            string.IsNullOrEmpty(e.Component) ? "device" : e.Component,
+            e.PropertyName,
+            updated
+        );
+    }
+
     #endregion
 }
