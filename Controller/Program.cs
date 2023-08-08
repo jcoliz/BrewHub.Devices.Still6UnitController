@@ -24,6 +24,9 @@ using IHost host = Host.CreateDefaultBuilder(args)
         services.Configure<ModbusClientOptions>(
             context.Configuration.GetSection(ModbusClientOptions.Section)
         );
+        services.Configure<ProvisioningOptions>(
+            context.Configuration.GetSection(ProvisioningOptions.Section)
+        );
     })
     .ConfigureAppConfiguration(config =>
     {

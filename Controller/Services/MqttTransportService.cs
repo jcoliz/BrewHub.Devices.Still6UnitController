@@ -31,10 +31,8 @@ public class MqttTransportService: ITransportProvider
 #region Injected Fields
 
     private readonly ILogger _logger;
-    // Note that we need the entire config, because we have to pass unstructured
-    // InitialState properties to the model
-    private readonly IConfiguration _config;
     private readonly IOptions<MqttOptions> _options;
+    private readonly IOptions<ProvisioningOptions> _provisioningoptions;
 
     #endregion
 
@@ -50,14 +48,14 @@ public class MqttTransportService: ITransportProvider
     #region Constructor
     public MqttTransportService(
         ILoggerFactory logfact, 
-        IConfiguration config,
-        IOptions<MqttOptions> options
+        IOptions<MqttOptions> options,
+        IOptions<ProvisioningOptions> provisioningoptions
     ) 
     {
         // For more compact logs, only use the class name itself, NOT fully-qualified class name
         _logger = logfact.CreateLogger(nameof(MqttTransportService));
-        _config = config;
         _options = options;
+        _provisioningoptions = provisioningoptions;
 
         messageGenerator = new MessageGenerator(options.Value);
     }
@@ -84,8 +82,10 @@ public class MqttTransportService: ITransportProvider
     {
         try
         {
-            // TODO: Move "provisioning" config to  IOptions
-            _options.Value.ClientId = _config["Provisioning:deviceid"] ?? System.Net.Dns.GetHostName();
+            if (_options.Value is null)
+                throw new ApplicationException($"Unable to find MQTT connection details in app configuration. Create a config.toml with connection details in the content root.");
+
+            _options.Value.ClientId = _provisioningoptions?.Value?.DeviceId ?? System.Net.Dns.GetHostName();
             _logger.LogInformation(LogEvents.ProvisionOK,"Provisioning: OK. Device {id}", _options.Value.ClientId);
         }
         catch (Exception ex)
