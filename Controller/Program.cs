@@ -4,7 +4,7 @@
 using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Devices.Platform.Common.Workers;
 using BrewHub.Devices.Platform.Common.Providers;
-using BrewHub.Devices.Platform.Mqtt;
+using BrewHub.Devices.Services;
 using BrewHub.Protocol.Mqtt;
 using BrewHub.Controllers;
 using BrewHub.Controllers.Models.Modbus.Client;
@@ -13,7 +13,7 @@ using IHost host = Host.CreateDefaultBuilder(args)
     .UseSystemd() 
     .ConfigureServices((context, services) =>
     {
-        services.AddSingleton<ITransportProvider, MqttWorker>();
+        services.AddSingleton<ITransportProvider, MqttTransportService>();
         services.AddSingleton<IRootModel,Still6UnitModel>();
         services.AddSingleton<IModbusClient, ModbusClient>();
         services.AddHostedService<DeviceWorker>();

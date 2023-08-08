@@ -6,6 +6,7 @@ using BrewHub.Devices.Platform.Common.Models;
 using BrewHub.Devices.Platform.Common.Logging;
 using BrewHub.Devices.Platform.Common.Providers;
 using BrewHub.Protocol.Mqtt;
+using Microsoft.Extensions.Options;
 using MQTTnet;
 using MQTTnet.Client.Connecting;
 using MQTTnet.Client.Disconnecting;
@@ -15,9 +16,8 @@ using MQTTnet.Extensions.ManagedClient;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Options;
 
-namespace BrewHub.Devices.Platform.Mqtt;
+namespace BrewHub.Devices.Services;
 
 /// <summary>
 /// Provides MQTT-based transport service using BrewHub protocol.
@@ -26,7 +26,7 @@ namespace BrewHub.Devices.Platform.Mqtt;
 /// Note that this is now mis-named. It's not a worker anymore, it's a 'service'.
 /// </remarks>
 
-public class MqttWorker: ITransportProvider
+public class MqttTransportService: ITransportProvider
 {
 #region Injected Fields
 
@@ -48,14 +48,14 @@ public class MqttWorker: ITransportProvider
     #endregion
 
     #region Constructor
-    public MqttWorker(
+    public MqttTransportService(
         ILoggerFactory logfact, 
         IConfiguration config,
         IOptions<MqttOptions> options
     ) 
     {
         // For more compact logs, only use the class name itself, NOT fully-qualified class name
-        _logger = logfact.CreateLogger(nameof(MqttWorker));
+        _logger = logfact.CreateLogger(nameof(MqttTransportService));
         _config = config;
         _options = options;
 
