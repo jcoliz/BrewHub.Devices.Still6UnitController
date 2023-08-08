@@ -22,10 +22,6 @@ namespace BrewHub.Devices.Services;
 /// <summary>
 /// Provides MQTT-based transport service using BrewHub protocol.
 /// </summary>
-/// <remarks>
-/// Note that this is now mis-named. It's not a worker anymore, it's a 'service'.
-/// </remarks>
-
 public class MqttTransportService: ITransportProvider
 {
 #region Injected Fields
